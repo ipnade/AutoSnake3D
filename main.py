@@ -11,22 +11,16 @@ from snake import Snake
 pygame.init()
 display = (1600, 900)
 pygame.display.set_mode(display, DOUBLEBUF | OPENGL)
-
-# Enable depth testing
 glEnable(GL_DEPTH_TEST)
 glDepthFunc(GL_LESS)
-
-# Set up the perspective
 gluPerspective(45, (display[0]/display[1]), 0.1, 150.0)
-glTranslatef(0.0, 0.0, -100)  # Move back to see the grid
+glTranslatef(0.0, 0.0, -100)
 
-# Add near the top with other initializations
 clock = pygame.time.Clock()
-pygame.display.gl_set_attribute(pygame.GL_SWAP_CONTROL, 1)  # Enable VSync
+pygame.display.gl_set_attribute(pygame.GL_SWAP_CONTROL, 1)
 
 def draw_grid():
     glBegin(GL_LINES)
-    # Draw the cube outline only
     glColor3f(0.2, 0.2, 0.2)
     
     # Front face outline
@@ -72,7 +66,6 @@ def get_next_move(snake, food):
         food[2] - head[2]
     )
     
-    # Try continuing in current direction first
     new_pos = (
         head[0] + current_direction[0],
         head[1] + current_direction[1],
@@ -87,11 +80,9 @@ def get_next_move(snake, food):
         if current_distance < head_distance:
             return current_direction
     
-    # Find the primary axis to move along
+    # Find primary axis to move along
     abs_food_dir = [abs(x) for x in food_direction]
     primary_axis = abs_food_dir.index(max(abs_food_dir))
-    
-    # Create prioritized moves list
     possible_moves = []
     
     # Add move in primary axis direction first
@@ -113,7 +104,7 @@ def get_next_move(snake, food):
     if opposite_move in possible_moves:
         possible_moves.remove(opposite_move)
     
-    # Try moves in order of priority
+    # Try moves in priority order
     for move in possible_moves:
         new_pos = tuple(head[i] + move[i] for i in range(3))
         
@@ -135,32 +126,33 @@ def draw_cube(position, size=1, color=(1, 1, 1)):
     x, y, z = position
     glColor3f(*color)
     glBegin(GL_QUADS)
-    # Front face
+    # Draw cube faces
+    # Front
     glVertex3f(x-size, y-size, z+size)
     glVertex3f(x+size, y-size, z+size)
     glVertex3f(x+size, y+size, z+size)
     glVertex3f(x-size, y+size, z+size)
-    # Back face
+    # Back
     glVertex3f(x-size, y-size, z-size)
     glVertex3f(x-size, y+size, z-size)
     glVertex3f(x+size, y+size, z-size)
     glVertex3f(x+size, y-size, z-size)
-    # Top face
+    # Top
     glVertex3f(x-size, y+size, z-size)
     glVertex3f(x-size, y+size, z+size)
     glVertex3f(x+size, y+size, z+size)
     glVertex3f(x+size, y+size, z-size)
-    # Bottom face
+    # Bottom
     glVertex3f(x-size, y-size, z-size)
     glVertex3f(x+size, y-size, z-size)
     glVertex3f(x+size, y-size, z+size)
     glVertex3f(x-size, y-size, z+size)
-    # Right face
+    # Right
     glVertex3f(x+size, y-size, z-size)
     glVertex3f(x+size, y+size, z-size)
     glVertex3f(x+size, y+size, z+size)
     glVertex3f(x+size, y-size, z+size)
-    # Left face
+    # Left
     glVertex3f(x-size, y-size, z-size)
     glVertex3f(x-size, y-size, z+size)
     glVertex3f(x-size, y+size, z+size)
@@ -171,71 +163,54 @@ def draw_cube(position, size=1, color=(1, 1, 1)):
 snake = Snake()
 food = spawn_food(snake.body)
 game_speed = 50  # Milliseconds between moves
-last_move_time = 0  # Track the last time the snake moved
+last_move_time = 0
+angleX = angleY = angleZ = 0
 
 # Main game loop
-angleX = 0
-angleY = 0
-angleZ = 0
 while True:
-    # Lock the framerate to monitor refresh rate
-    clock.tick(60)  # 60 FPS or your monitor's refresh rate
+    clock.tick(60)  # Lock framerate
     
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             quit()
 
-    # Clear the screen
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-    
-    # Rotate camera around the center
     glLoadIdentity()
     gluPerspective(45, (display[0]/display[1]), 0.1, 150.0)
     radius = 100
     
-    # Calculate camera position using smooth spherical coordinates
+    # Calculate camera position
     camX = radius * math.cos(angleX)
-    camY = radius * math.sin(angleY) * 0.5  # Multiply by 0.5 to reduce vertical movement
+    camY = radius * math.sin(angleY) * 0.5
     camZ = radius * math.sin(angleX)
     
-    gluLookAt(camX, camY, camZ,  # Camera position
-              0, 0, 0,           # Look at point
-              0, 1, 0)           # Up vector
+    gluLookAt(camX, camY, camZ, 0, 0, 0, 0, 1, 0)
     
-    # Get current time
     current_time = pygame.time.get_ticks()
     
-    # Move snake based on elapsed time
     if current_time - last_move_time >= game_speed:
-        # Get AI move
         next_move = get_next_move(snake, food)
         snake.move(next_move)
         
-        # Check if food eaten
         if snake.body[0] == food:
             snake.grow = True
             food = spawn_food(snake.body)
         
-        # Check for game over
         if snake.check_collision():
             pygame.quit()
             quit()
             
         last_move_time = current_time
 
-    # Draw the grid
     draw_grid()
     
-    # Draw snake
     for segment in snake.body:
-        draw_cube(segment, 1.0, (1, 1, 1))  # Changed size from 0.5 to 1.0
-    # Draw food
-    draw_cube(food, 1.0, (1, 0, 0))  # Changed size from 0.5 to 1.0
+        draw_cube(segment, 1.0, (1, 1, 1))
+    draw_cube(food, 1.0, (1, 0, 0))
     
-    # Update display
     pygame.display.flip()
     
-    # Increment rotation angles with smaller values for slower rotation
-    angleX += 0.002  # Changed from 0.005 to 0.002
-    angleY += 0.001  # Changed from 0.003 to 0.001
+    # Update camera rotation
+    angleX += 0.002
+    angleY += 0.001
