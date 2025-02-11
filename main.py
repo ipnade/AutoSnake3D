@@ -162,13 +162,13 @@ def draw_cube(position, size=1, color=(1, 1, 1)):
 # Initialize game objects
 snake = Snake()
 food = spawn_food(snake.body)
-game_speed = 50  # Milliseconds between moves
+game_speed = 25
 last_move_time = 0
 angleX = angleY = angleZ = 0
 
 # Main game loop
 while True:
-    clock.tick(60)  # Lock framerate
+    clock.tick(30)
     
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
