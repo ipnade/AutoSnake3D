@@ -16,8 +16,8 @@ A self-playing 3D Snake game built with Pygame and OpenGL. The game runs autonom
 ## Installation
 1. Clone this repository:
    ```sh
-   git clone https://github.com/ipnade/Snake3D.git
-   cd Snake3D
+   git clone https://github.com/ipnade/AutoSnake3D.git
+   cd AutoSnake3D
    ```
 2. Install dependencies:
    ```sh
