@@ -213,6 +213,9 @@ def main():
 
     while True:
         clock.tick(config['display']['fps'])
+        current_time = pygame.time.get_ticks()
+        
+        # Handle events
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -241,6 +244,9 @@ def main():
                             if not config['particles']['enabled']:
                                 game_state.particle_system.particles = []
 
+        # Update game state
+        game_state.update(current_time)
+
         radius = 100
         camX = radius * math.cos(angleX)
         camY = radius * math.sin(angleY) * 0.5
@@ -248,27 +254,25 @@ def main():
         
         renderer.setup_frame(display, (camX, camY, camZ))
         
-        # Inside the main game loop, where food collection is handled
-        if not game_state.update(pygame.time.get_ticks()):
-            pygame.quit()
-            quit()
-
+        # Enable depth testing before 3D rendering
+        glEnable(GL_DEPTH_TEST)
+        
         renderer.draw_grid()
         renderer.draw_snake(game_state.get_visible_segments())
         renderer.draw_sphere(game_state.get_food_position(), 0.8, (1, 0, 0))
         
-        # Only emit and draw particles if enabled
         if config['particles']['enabled']:
             game_state.particle_system.draw()
-            # Move particle emission check here so positions aren't stored when disabled
             if game_state.food_collected:
-                # Change color to pure red (RGB: 1.0, 0.0, 0.0)
                 game_state.particle_system.emit_particles(
                     position=game_state.last_food_pos, 
-                    color=[1.0, 0.0, 0.0]  # Use list instead of tuple for consistency
+                    color=[1.0, 0.0, 0.0]
                 )
-                game_state.food_collected = False  # Reset the flag after handling
+                game_state.food_collected = False
 
+        # Disable depth testing for UI elements
+        glDisable(GL_DEPTH_TEST)
+        
         # Update panel animation
         if show_settings_panel:
             panel_animation_progress = min(1, panel_animation_progress + animation_speed)

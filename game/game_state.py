@@ -93,31 +93,32 @@ class GameState:
         if self.dying:
             if current_time - self.last_death_effect >= self.death_speed:
                 if self.death_animation_segment < len(self.snake.body):
-                    # Get segment from tail (last index - current animation step)
-                    segment_index = len(self.snake.body) - 1 - self.death_animation_segment
-                    segment = self.snake.body[segment_index]
+                    # Only emit particles if enabled
+                    if self.config['particles']['enabled']:
+                        segment_index = len(self.snake.body) - 1 - self.death_animation_segment
+                        segment = self.snake.body[segment_index]
+                        
+                        # Calculate color for current segment
+                        if self.config['snake']['colors']['grayscale']:
+                            color = [1.0 - (segment_index/len(self.snake.body))] * 3
+                        else:
+                            color = [0.0, 1.0 - (segment_index/(2*len(self.snake.body))), 0.0]
+                        
+                        # Emit particles
+                        for _ in range(30):
+                            velocity = [
+                                random.uniform(-15, 15),
+                                random.uniform(5, 20),
+                                random.uniform(-15, 15)
+                            ]
+                            self.particle_system.emit_particle(
+                                position=segment,
+                                velocity=velocity, 
+                                color=color,
+                                lifetime=random.uniform(0.5, 1.5)
+                            )
                     
-                    # Calculate color for current segment
-                    if self.config['snake']['colors']['grayscale']:
-                        color = [1.0 - (segment_index/len(self.snake.body))] * 3
-                    else:
-                        color = [0.0, 1.0 - (segment_index/(2*len(self.snake.body))), 0.0]
-                    
-                    # Emit more particles with higher velocity
-                    for _ in range(30):
-                        velocity = [
-                            random.uniform(-15, 15),
-                            random.uniform(5, 20),  # More upward velocity
-                            random.uniform(-15, 15)
-                        ]
-                        self.particle_system.emit_particle(
-                            position=segment,
-                            velocity=velocity,
-                            color=color,
-                            lifetime=random.uniform(0.5, 1.5)
-                        )
-                    
-                    # Accelerate the death animation
+                    # Progress death animation regardless of particles
                     self.death_speed = max(50, 500 - (self.death_animation_segment * 25))
                     self.death_animation_segment += 1
                     self.last_death_effect = current_time
