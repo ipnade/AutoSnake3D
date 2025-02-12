@@ -3,6 +3,7 @@ from pygame.locals import *
 from OpenGL.GL import *
 from OpenGL.GLU import *
 import math
+import numpy as np
 from config import config
 from game.renderer import Renderer
 from game.game_state import GameState

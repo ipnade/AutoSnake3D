@@ -1,10 +1,14 @@
 from OpenGL.GL import *
 from OpenGL.GLU import *
+from OpenGL.arrays import vbo
+import numpy as np
 
 
 class Renderer:
     def __init__(self, config):
         self.config = config
+        self.snake_vbo = None
+        self.snake_colors_vbo = None
         
     def draw_grid(self):
         glBegin(GL_LINES)
@@ -90,37 +94,79 @@ class Renderer:
         
         glPopMatrix()
         
-    def draw_snake(self, snake_body):
+    def batch_prepare_snake(self, snake_body):
+        vertices = []
+        colors = []
+        
         for i, segment in enumerate(snake_body):
-            t = i / len(snake_body)
-            
+            # Make head 20% larger than body segments
+            scale = 1.2 if i == 0 else 1.0
             x, y, z = segment
-            offset = self.config['snake']['z_fighting_offset'] * i
-            adjusted_pos = (x + offset, y + offset, z + offset)
+            cube_vertices = [
+                # Front face
+                [x-0.5*scale, y-0.5*scale, z+0.5*scale],
+                [x+0.5*scale, y-0.5*scale, z+0.5*scale],
+                [x+0.5*scale, y+0.5*scale, z+0.5*scale],
+                [x-0.5*scale, y+0.5*scale, z+0.5*scale],
+                # Back face
+                [x-0.5*scale, y-0.5*scale, z-0.5*scale],
+                [x+0.5*scale, y-0.5*scale, z-0.5*scale],
+                [x+0.5*scale, y+0.5*scale, z-0.5*scale],
+                [x-0.5*scale, y+0.5*scale, z-0.5*scale],
+            ]
+            vertices.extend(cube_vertices)
             
+            # Calculate color based on position in snake
             if self.config['snake']['colors']['grayscale']:
-                if i == 0:
-                    color = self.config['snake']['colors']['grayscale_palette']['head']
-                    size = self.config['snake']['size']['head']
-                else:
-                    size = self.config['snake']['size']['body']
-                    brightness = 1.0 - (t * 0.7)
-                    color = (brightness, brightness, brightness)
+                color = [1.0 - (i/len(snake_body))] * 3
             else:
-                if i == 0:
-                    color = self.config['snake']['colors']['head']
-                    size = self.config['snake']['size']['head']
-                else:
-                    size = self.config['snake']['size']['body']
-                    pattern = i % len(self.config['snake']['colors']['body_pattern'])
-                    base_color = self.config['snake']['colors']['body_pattern'][pattern]
-                    
-                    if self.config['effects']['gradient_fade']:
-                        color = tuple(c * (1 - t * 0.3) for c in base_color)
-                    else:
-                        color = base_color
-            
-            self.draw_cube(adjusted_pos, size, color)
+                color = [0.0, 1.0 - (i/(2*len(snake_body))), 0.0]
+            colors.extend([color] * 8)
+        
+        # Create VBOs if they don't exist
+        if self.snake_vbo is None:
+            self.snake_vbo = vbo.VBO(np.array(vertices, dtype=np.float32))
+            self.snake_colors_vbo = vbo.VBO(np.array(colors, dtype=np.float32))
+        else:
+            # Update existing VBOs
+            self.snake_vbo.set_array(np.array(vertices, dtype=np.float32))
+            self.snake_colors_vbo.set_array(np.array(colors, dtype=np.float32))
+
+    def draw_snake(self, snake_body):
+        self.batch_prepare_snake(snake_body)
+        
+        # Enable vertex arrays
+        glEnableClientState(GL_VERTEX_ARRAY)
+        glEnableClientState(GL_COLOR_ARRAY)
+        
+        # Bind VBOs and specify data
+        self.snake_vbo.bind()
+        glVertexPointer(3, GL_FLOAT, 0, None)
+        
+        self.snake_colors_vbo.bind()
+        glColorPointer(3, GL_FLOAT, 0, None)
+        
+        # Draw all cubes at once
+        indices = []
+        for i in range(len(snake_body)):
+            base = i * 8
+            cube_indices = [
+                base, base+1, base+2, base+2, base+3, base,  # Front face
+                base+5, base+4, base+7, base+7, base+6, base+5,  # Back face
+                base+1, base+5, base+6, base+6, base+2, base+1,  # Right face
+                base+4, base, base+3, base+3, base+7, base+4,  # Left face
+                base+3, base+2, base+6, base+6, base+7, base+3,  # Top face
+                base+4, base+5, base+1, base+1, base, base+4   # Bottom face
+            ]
+            indices.extend(cube_indices)
+        
+        glDrawElements(GL_TRIANGLES, len(indices), GL_UNSIGNED_INT, np.array(indices, dtype=np.uint32))
+        
+        # Cleanup
+        self.snake_vbo.unbind()
+        self.snake_colors_vbo.unbind()
+        glDisableClientState(GL_VERTEX_ARRAY)
+        glDisableClientState(GL_COLOR_ARRAY)
 
     def setup_frame(self, display, camera_pos):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
