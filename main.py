@@ -86,6 +86,32 @@ def draw_ui(display, show_panel, panel_offset, gear_texture, font):  # Add font 
         panel_y = 70
         row_height = 30
         padding = 10
+        border_thickness = 2  # Add border thickness
+
+        # Draw border
+        glColor3f(0.4, 0.4, 0.4)  # Light gray border
+        glBegin(GL_QUADS)
+        # Left border
+        glVertex2f(panel_x - border_thickness, panel_y - border_thickness)
+        glVertex2f(panel_x, panel_y - border_thickness)
+        glVertex2f(panel_x, panel_y + panel_height + border_thickness)
+        glVertex2f(panel_x - border_thickness, panel_y + panel_height + border_thickness)
+        # Top border
+        glVertex2f(panel_x - border_thickness, panel_y - border_thickness)
+        glVertex2f(panel_x + panel_width + border_thickness, panel_y - border_thickness)
+        glVertex2f(panel_x + panel_width + border_thickness, panel_y)
+        glVertex2f(panel_x - border_thickness, panel_y)
+        # Right border
+        glVertex2f(panel_x + panel_width, panel_y - border_thickness)
+        glVertex2f(panel_x + panel_width + border_thickness, panel_y - border_thickness)
+        glVertex2f(panel_x + panel_width + border_thickness, panel_y + panel_height + border_thickness)
+        glVertex2f(panel_x + panel_width, panel_y + panel_height + border_thickness)
+        # Bottom border
+        glVertex2f(panel_x - border_thickness, panel_y + panel_height)
+        glVertex2f(panel_x + panel_width + border_thickness, panel_y + panel_height)
+        glVertex2f(panel_x + panel_width + border_thickness, panel_y + panel_height + border_thickness)
+        glVertex2f(panel_x - border_thickness, panel_y + panel_height + border_thickness)
+        glEnd()
 
         # Draw main panel background
         glColor3f(0.2, 0.2, 0.2)  # Darker background
@@ -216,6 +242,91 @@ def draw_ui(display, show_panel, panel_offset, gear_texture, font):  # Add font 
             glBindTexture(GL_TEXTURE_2D, 0)
             glDeleteTextures([text_texture])
 
+            # Add slider for particle density
+            slider_y = checkbox_row_y + row_height + 25  # Increased from +5 to +25 for more spacing
+            slider_width = panel_width - 2 * padding - 60  # Make slider shorter
+            slider_height = 4
+            
+            # Draw slider label
+            text_surface = font.render("Particle Density", True, (200, 200, 200))
+            text_data = pygame.image.tostring(text_surface, "RGBA", True)
+            text_width = text_surface.get_width()
+            text_height = text_surface.get_height()
+            
+            text_x = panel_x + padding + 20
+            text_y = slider_y - text_height - 5
+            
+            glEnable(GL_TEXTURE_2D)
+            text_texture = glGenTextures(1)
+            glBindTexture(GL_TEXTURE_2D, text_texture)
+            glTexParameter(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+            glTexParameter(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, text_width, text_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, text_data)
+            
+            glColor4f(1, 1, 1, 1)
+            glBegin(GL_QUADS)
+            glTexCoord2f(0, 1); glVertex2f(text_x, text_y)
+            glTexCoord2f(1, 1); glVertex2f(text_x + text_width, text_y)
+            glTexCoord2f(1, 0); glVertex2f(text_x + text_width, text_y + text_height)
+            glTexCoord2f(0, 0); glVertex2f(text_x, text_y + text_height)
+            glEnd()
+            
+            glBindTexture(GL_TEXTURE_2D, 0)
+            glDeleteTextures([text_texture])
+
+            # Draw particle count value
+            value_text = str(config['particles']['count'])
+            text_surface = font.render(value_text, True, (200, 200, 200))
+            text_data = pygame.image.tostring(text_surface, "RGBA", True)
+            text_width = text_surface.get_width()
+            text_height = text_surface.get_height()
+            
+            # Position the number to the right of the slider
+            text_x = panel_x + padding + 20 + slider_width + 10
+            text_y = slider_y - text_height/2
+            
+            glEnable(GL_TEXTURE_2D)
+            text_texture = glGenTextures(1)
+            glBindTexture(GL_TEXTURE_2D, text_texture)
+            glTexParameter(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+            glTexParameter(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, text_width, text_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, text_data)
+            
+            glColor4f(1, 1, 1, 1)
+            glBegin(GL_QUADS)
+            glTexCoord2f(0, 1); glVertex2f(text_x, text_y)
+            glTexCoord2f(1, 1); glVertex2f(text_x + text_width, text_y)
+            glTexCoord2f(1, 0); glVertex2f(text_x + text_width, text_y + text_height)
+            glTexCoord2f(0, 0); glVertex2f(text_x, text_y + text_height)
+            glEnd()
+            
+            glBindTexture(GL_TEXTURE_2D, 0)
+            glDeleteTextures([text_texture])
+            
+            # Draw slider track
+            glColor3f(0.3, 0.3, 0.3)
+            glBegin(GL_QUADS)
+            glVertex2f(panel_x + padding + 20, slider_y)
+            glVertex2f(panel_x + padding + 20 + slider_width, slider_y)
+            glVertex2f(panel_x + padding + 20 + slider_width, slider_y + slider_height)
+            glVertex2f(panel_x + padding + 20, slider_y + slider_height)
+            glEnd()
+            
+            # Draw slider handle
+            handle_width = 10
+            handle_height = 16
+            value_range = config['particles']['max_count'] - config['particles']['min_count']
+            normalized_value = (config['particles']['count'] - config['particles']['min_count']) / value_range
+            handle_x = panel_x + padding + 20 + (slider_width - handle_width) * normalized_value
+            
+            glColor3f(0.8, 0.8, 0.8)
+            glBegin(GL_QUADS)
+            glVertex2f(handle_x, slider_y - handle_height/4)
+            glVertex2f(handle_x + handle_width, slider_y - handle_height/4)
+            glVertex2f(handle_x + handle_width, slider_y + handle_height)
+            glVertex2f(handle_x, slider_y + handle_height)
+            glEnd()
+
     # Disable blending if not needed later
     glDisable(GL_BLEND)
     
@@ -257,6 +368,8 @@ def main():
     # Initialize font
     font = pygame.font.SysFont("Arial", 18)
 
+    dragging_slider = False
+
     while True:
         clock.tick(config['display']['fps'])
         current_time = pygame.time.get_ticks()
@@ -295,6 +408,35 @@ def main():
                                 config['particles']['enabled'] = not config['particles']['enabled']
                                 if not config['particles']['enabled']:
                                     game_state.particle_system.particles = []
+                        
+                        # Add slider interaction
+                        if config.get('ui_particles_expanded', False):
+                            checkbox_row_y = header_y + row_height
+                            slider_y = checkbox_row_y + row_height + 25
+                            slider_x = display[0] - panel_offset + padding + 20
+                            slider_width = panel_width - 2 * padding - 60  # Match the visual width
+                            
+                            # Check if click is within slider bounds
+                            if (slider_x <= mouse_pos[0] <= slider_x + slider_width and
+                                slider_y - 8 <= mouse_pos[1] <= slider_y + 20):
+                                normalized_pos = (mouse_pos[0] - slider_x) / slider_width
+                                config['particles']['count'] = int(
+                                    config['particles']['min_count'] + 
+                                    normalized_pos * (config['particles']['max_count'] - config['particles']['min_count'])
+                                )
+                                dragging_slider = True
+            elif event.type == pygame.MOUSEBUTTONUP:
+                if event.button == 1:
+                    dragging_slider = False
+            elif event.type == pygame.MOUSEMOTION:
+                if dragging_slider and show_settings_panel:
+                    slider_x = display[0] - panel_offset + padding + 20
+                    slider_width = panel_width - 2 * padding - 60  # Match the visual width
+                    normalized_pos = max(0, min(1, (event.pos[0] - slider_x) / slider_width))
+                    config['particles']['count'] = int(
+                        config['particles']['min_count'] + 
+                        normalized_pos * (config['particles']['max_count'] - config['particles']['min_count'])
+                    )
 
         # Update game state
         game_state.update(current_time)
@@ -318,7 +460,8 @@ def main():
             if game_state.food_collected:
                 game_state.particle_system.emit_particles(
                     position=game_state.last_food_pos, 
-                    color=[1.0, 0.0, 0.0]
+                    color=[1.0, 0.0, 0.0],
+                    count=config['particles']['count']  # Add this line to pass the count
                 )
                 game_state.food_collected = False
 

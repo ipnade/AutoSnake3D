@@ -8,8 +8,11 @@ class ParticleSystem:
         self.particles = []
         glPointSize(5.0)  # Larger point size for better visibility
 
-    def emit_particles(self, position, count=20, color=(1.0, 0.5, 0.0)):
-        for _ in range(count):
+    def emit_particles(self, position, count=None, color=(1.0, 0.5, 0.0)):
+        # Use provided count or default from config
+        particle_count = count if count is not None else 30
+        
+        for _ in range(particle_count):
             # Random velocity in sphere
             angle1 = random.uniform(0, 2 * math.pi)
             angle2 = random.uniform(0, 2 * math.pi)

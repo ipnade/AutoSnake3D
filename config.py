@@ -59,7 +59,9 @@ config = {
     # Particle settings
     'particles': {
         'enabled': True,
-        'count': 30,
+        'count': 30,  # This becomes the default value
+        'min_count': 10,  # Minimum particles
+        'max_count': 100,  # Maximum particles
         'lifetime': {
             'min': 0.5,
             'max': 2.0

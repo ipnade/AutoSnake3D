@@ -1,5 +1,6 @@
 import random
 import math
+import config
 from snake import Snake
 from particle_system import ParticleSystem
 
@@ -104,8 +105,8 @@ class GameState:
                         else:
                             color = [0.0, 1.0 - (segment_index/(2*len(self.snake.body))), 0.0]
                         
-                        # Emit particles
-                        for _ in range(30):
+                        # Use config particle count instead of hardcoded 30
+                        for _ in range(self.config['particles']['count']):  # Changed from 30 to config value
                             velocity = [
                                 random.uniform(-15, 15),
                                 random.uniform(5, 20),
@@ -162,3 +163,14 @@ class GameState:
             return self.snake.body
         # Return all segments except the ones that have been destroyed
         return self.snake.body[:(len(self.snake.body) - self.death_animation_segment)]
+
+def draw(self):
+    if self.config['particles']['enabled']:
+        self.particle_system.draw()
+        if self.food_collected:
+            self.particle_system.emit_particles(
+                position=self.last_food_pos, 
+                color=[1.0, 0.0, 0.0],
+                count=self.config['particles']['count']  # Pass the count from config
+            )
+            self.food_collected = False
