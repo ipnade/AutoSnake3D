@@ -1,11 +1,10 @@
-# 3D Snake Live Wallpaper
+# 3D Auto Snake
 
-A self-playing 3D Snake game built with Pygame and OpenGL, designed to be used as a live wallpaper. The game runs autonomously, and future updates will include customizable settings for user preferences.
+A self-playing 3D Snake game built with Pygame and OpenGL. The game runs autonomously, and future updates will include customizable settings for user preferences.
 
 ## Features
 - **Self-Playing AI:** Watch the snake navigate and grow on its own.
 - **3D Graphics:** Built using OpenGL for a dynamic visual experience.
-- **Live Wallpaper Mode:** Intended for use as an animated desktop background.
 - **Customizable Settings (Planned):** Users will be able to modify speed, colors, and other aspects of the game.
 
 ## Requirements
@@ -17,8 +16,8 @@ A self-playing 3D Snake game built with Pygame and OpenGL, designed to be used a
 ## Installation
 1. Clone this repository:
    ```sh
-   git clone https://github.com/ipnade/Snake3D.git
-   cd Snake3D
+   git clone https://github.com/ipnade/AutoSnake3D.git
+   cd AutoSnake3D
    ```
 2. Install dependencies:
    ```sh
@@ -34,10 +33,8 @@ A self-playing 3D Snake game built with Pygame and OpenGL, designed to be used a
 - Press 'G' to toggle between normal and grayscale color modes.
 - Press 'K' to trigger the death animation (debug feature).
 - Press 'T' to add a tail segment (debug feature).
-- Future updates will include a way to set it as a live wallpaper on various operating systems.
 
 ## Planned Features
-- **Wallpaper Integration:** Methods to run the game as a true live wallpaper on Windows, Linux, and possibly macOS.
 - **Customization Options:** Adjustable settings for colors, speed, AI behavior, and more.
 - **Performance Optimizations:** Improving efficiency for lower resource usage.
 
@@ -45,11 +42,6 @@ A self-playing 3D Snake game built with Pygame and OpenGL, designed to be used a
 Contributions are welcome! If you have suggestions or improvements, feel free to open an issue or submit a pull request.
 
 ## License
-[GNU General Public License v3.0]
+[GNU General Public License v3.0](LICENSE)
 
 ---
-
-### Notes
-- Since running a Pygame window as a wallpaper requires system-specific tweaks, future updates will include detailed setup instructions.
-- If you have any feature requests, let me know!
-

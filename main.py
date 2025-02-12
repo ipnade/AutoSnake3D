@@ -84,13 +84,34 @@ def draw_ui(display, show_panel, panel_offset, gear_texture):
         panel_height = 300
         panel_x = display[0] - panel_offset
         panel_y = 70
-        glColor3f(0.5, 0.5, 0.5)
+        row_height = 30
+        padding = 10
+
+        # Draw main panel background
+        glColor3f(0.2, 0.2, 0.2)  # Darker background
         glBegin(GL_QUADS)
         glVertex2f(panel_x, panel_y)
         glVertex2f(panel_x+panel_width, panel_y)
         glVertex2f(panel_x+panel_width, panel_y+panel_height)
         glVertex2f(panel_x, panel_y+panel_height)
         glEnd()
+
+        # Draw rows
+        for i in range(9):  # Number of setting rows
+            row_y = panel_y + (i * row_height) + padding
+            
+            # Alternate row colors
+            if i % 2 == 0:
+                glColor3f(0.3, 0.3, 0.3)  # Slightly lighter
+            else:
+                glColor3f(0.25, 0.25, 0.25)  # Slightly darker
+                
+            glBegin(GL_QUADS)
+            glVertex2f(panel_x + padding, row_y)
+            glVertex2f(panel_x + panel_width - padding, row_y)
+            glVertex2f(panel_x + panel_width - padding, row_y + row_height - 2)
+            glVertex2f(panel_x + padding, row_y + row_height - 2)
+            glEnd()
 
     # Disable blending if not needed later
     glDisable(GL_BLEND)
@@ -100,6 +121,9 @@ def draw_ui(display, show_panel, panel_offset, gear_texture):
     glMatrixMode(GL_PROJECTION)
     glPopMatrix()
     glMatrixMode(GL_MODELVIEW)
+
+def ease_out_quad(t):
+    return 1 - (1 - t) * (1 - t)
 
 def main():
     display = initialize_gl(config)  # Initialize pygame and set display mode
@@ -116,6 +140,8 @@ def main():
     show_settings_panel = False
     panel_offset = 0
     panel_width = 200
+    panel_animation_progress = 0  # Track animation from 0 to 1
+    animation_speed = 0.15  # Controls overall animation speed
     ui_slide_speed = 10
     settings_button_rect = pygame.Rect(display[0] - 50 - 10, 10, 50, 50)
 
@@ -156,10 +182,15 @@ def main():
         if config['particles']['enabled']:
             game_state.particle_system.draw()
 
-        if show_settings_panel and panel_offset < panel_width:
-            panel_offset = min(panel_offset + ui_slide_speed, panel_width)
-        elif not show_settings_panel and panel_offset > 0:
-            panel_offset = max(panel_offset - ui_slide_speed, 0)
+        # Update panel animation
+        if show_settings_panel:
+            panel_animation_progress = min(1, panel_animation_progress + animation_speed)
+        else:
+            panel_animation_progress = max(0, panel_animation_progress - animation_speed)
+            
+        # Apply easing function to get smooth deceleration
+        eased_progress = ease_out_quad(panel_animation_progress)
+        panel_offset = panel_width * eased_progress
 
         # Pass gear_texture to draw_ui
         draw_ui(display, panel_offset > 0, panel_offset, gear_texture)
