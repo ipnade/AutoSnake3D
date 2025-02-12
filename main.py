@@ -159,6 +159,37 @@ def draw_cube(position, size=1, color=(1, 1, 1)):
     glVertex3f(x-size, y+size, z-size)
     glEnd()
 
+def draw_snake(snake_body):
+    for i, segment in enumerate(snake_body):
+        # Calculate base gradient from head to tail
+        t = i / len(snake_body)
+        
+        # Add tiny offset to reduce z-fighting
+        x, y, z = segment
+        offset = 0.02 * i  # Small cumulative offset for each segment
+        adjusted_pos = (x + offset, y + offset, z + offset)
+        
+        if i == 0:  # Head
+            # Golden yellow head, slightly larger
+            color = (1.0, 0.843, 0.0)
+            size = 1.0
+        else:  # Body with pattern
+            # Slightly smaller body segments
+            size = 0.95
+            # Create a repeating pattern every 3 segments
+            pattern = i % 3
+            if pattern == 1:
+                # Dark green segments
+                color = (0.0, 0.5 - t * 0.3, 0.0)
+            elif pattern == 2:
+                # Light green segments
+                color = (0.2, 0.8 - t * 0.3, 0.2)
+            else:
+                # Yellow-green segments
+                color = (0.4, 0.7 - t * 0.3, 0.0)
+        
+        draw_cube(adjusted_pos, size, color)
+
 # Initialize game objects
 snake = Snake()
 food = spawn_food(snake.body)
@@ -205,8 +236,7 @@ while True:
 
     draw_grid()
     
-    for segment in snake.body:
-        draw_cube(segment, 1.0, (1, 1, 1))
+    draw_snake(snake.body)
     draw_cube(food, 1.0, (1, 0, 0))
     
     pygame.display.flip()
