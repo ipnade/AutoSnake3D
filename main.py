@@ -13,7 +13,7 @@ display = (1600, 900)
 pygame.display.set_mode(display, DOUBLEBUF | OPENGL)
 glEnable(GL_DEPTH_TEST)
 glDepthFunc(GL_LESS)
-gluPerspective(45, (display[0]/display[1]), 0.1, 150.0)
+gluPerspective(45, (display[0]/display[1]), 0.1, 500.0)  # Increased far plane from 150 to 500
 glTranslatef(0.0, 0.0, -100)
 
 clock = pygame.time.Clock()
@@ -208,7 +208,7 @@ while True:
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     glLoadIdentity()
-    gluPerspective(45, (display[0]/display[1]), 0.1, 150.0)
+    gluPerspective(45, (display[0]/display[1]), 0.1, 500.0)
     radius = 100
     
     # Calculate camera position
