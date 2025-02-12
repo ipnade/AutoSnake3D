@@ -96,10 +96,8 @@ def draw_ui(display, show_panel, panel_offset, gear_texture, font):  # Add font 
         glVertex2f(panel_x, panel_y+panel_height)
         glEnd()
 
-        # Draw first row with checkbox
+        # Draw category header
         row_y = panel_y + padding
-        
-        # Draw row background
         glColor3f(0.3, 0.3, 0.3)
         glBegin(GL_QUADS)
         glVertex2f(panel_x + padding, row_y)
@@ -108,36 +106,35 @@ def draw_ui(display, show_panel, panel_offset, gear_texture, font):  # Add font 
         glVertex2f(panel_x + padding, row_y + row_height - 2)
         glEnd()
 
-        # Draw checkbox
-        checkbox_size = 16
-        checkbox_x = panel_x + padding + 5
-        checkbox_y = row_y + (row_height - checkbox_size) / 2
-
-        # Checkbox border
+        # Draw arrow (triangle)
+        arrow_size = 8
+        arrow_x = panel_x + padding + 5
+        arrow_y = row_y + (row_height - arrow_size) / 2
+        
         glColor3f(0.8, 0.8, 0.8)
-        glBegin(GL_LINE_LOOP)
-        glVertex2f(checkbox_x, checkbox_y)
-        glVertex2f(checkbox_x + checkbox_size, checkbox_y)
-        glVertex2f(checkbox_x + checkbox_size, checkbox_y + checkbox_size)
-        glVertex2f(checkbox_x, checkbox_y + checkbox_size)
+        glBegin(GL_TRIANGLES)
+        if config.get('ui_particles_expanded', False):
+            # Down arrow
+            glVertex2f(arrow_x, arrow_y)
+            glVertex2f(arrow_x + arrow_size, arrow_y)
+            glVertex2f(arrow_x + arrow_size/2, arrow_y + arrow_size)
+        else:
+            # Right arrow
+            glVertex2f(arrow_x, arrow_y)
+            glVertex2f(arrow_x + arrow_size, arrow_y + arrow_size/2)
+            glVertex2f(arrow_x, arrow_y + arrow_size)
         glEnd()
 
-        # Fill checkbox if enabled
-        if config['particles']['enabled']:
-            glColor3f(0.4, 0.8, 0.4)  # Green checkmark color
-            glBegin(GL_QUADS)
-            glVertex2f(checkbox_x + 2, checkbox_y + 2)
-            glVertex2f(checkbox_x + checkbox_size - 2, checkbox_y + 2)
-            glVertex2f(checkbox_x + checkbox_size - 2, checkbox_y + checkbox_size - 2)
-            glVertex2f(checkbox_x + 2, checkbox_y + checkbox_size - 2)
-            glEnd()
-
-        # Add text "Particles" next to checkbox
+        # Draw "Particles" category text
         text_surface = font.render("Particles", True, (200, 200, 200))
         text_data = pygame.image.tostring(text_surface, "RGBA", True)
         text_width = text_surface.get_width()
         text_height = text_surface.get_height()
         
+        text_x = arrow_x + arrow_size + 10
+        text_y = row_y + (row_height - text_height) / 2
+        
+        # Render text using texture
         glEnable(GL_TEXTURE_2D)
         text_texture = glGenTextures(1)
         glBindTexture(GL_TEXTURE_2D, text_texture)
@@ -145,12 +142,8 @@ def draw_ui(display, show_panel, panel_offset, gear_texture, font):  # Add font 
         glTexParameter(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, text_width, text_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, text_data)
         
-        text_x = checkbox_x + checkbox_size + 10
-        text_y = checkbox_y - 2
-        
         glColor4f(1, 1, 1, 1)
         glBegin(GL_QUADS)
-        # Change texture coordinates to flip vertically
         glTexCoord2f(0, 1); glVertex2f(text_x, text_y)
         glTexCoord2f(1, 1); glVertex2f(text_x + text_width, text_y)
         glTexCoord2f(1, 0); glVertex2f(text_x + text_width, text_y + text_height)
@@ -160,19 +153,68 @@ def draw_ui(display, show_panel, panel_offset, gear_texture, font):  # Add font 
         glBindTexture(GL_TEXTURE_2D, 0)
         glDeleteTextures([text_texture])
 
-        # Draw remaining rows
-        for i in range(1, 9):
-            row_y = panel_y + (i * row_height) + padding
-            if i % 2 == 0:
-                glColor3f(0.3, 0.3, 0.3)
-            else:
-                glColor3f(0.25, 0.25, 0.25)
+        # Draw checkbox contents if category is expanded
+        if config.get('ui_particles_expanded', False):
+            checkbox_row_y = row_y + row_height
+            
+            # Draw checkbox row background
+            glColor3f(0.25, 0.25, 0.25)
             glBegin(GL_QUADS)
-            glVertex2f(panel_x + padding, row_y)
-            glVertex2f(panel_x + panel_width - padding, row_y)
-            glVertex2f(panel_x + panel_width - padding, row_y + row_height - 2)
-            glVertex2f(panel_x + padding, row_y + row_height - 2)
+            glVertex2f(panel_x + padding + 15, checkbox_row_y)
+            glVertex2f(panel_x + panel_width - padding, checkbox_row_y)
+            glVertex2f(panel_x + panel_width - padding, checkbox_row_y + row_height - 2)
+            glVertex2f(panel_x + padding + 15, checkbox_row_y + row_height - 2)
             glEnd()
+
+            # Draw enable/disable checkbox
+            checkbox_size = 16
+            checkbox_x = panel_x + padding + 20
+            checkbox_y = checkbox_row_y + (row_height - checkbox_size) / 2
+
+            # Checkbox border and fill
+            glColor3f(0.8, 0.8, 0.8)
+            glBegin(GL_LINE_LOOP)
+            glVertex2f(checkbox_x, checkbox_y)
+            glVertex2f(checkbox_x + checkbox_size, checkbox_y)
+            glVertex2f(checkbox_x + checkbox_size, checkbox_y + checkbox_size)
+            glVertex2f(checkbox_x, checkbox_y + checkbox_size)
+            glEnd()
+
+            if config['particles']['enabled']:
+                glColor3f(0.4, 0.8, 0.4)
+                glBegin(GL_QUADS)
+                glVertex2f(checkbox_x + 2, checkbox_y + 2)
+                glVertex2f(checkbox_x + checkbox_size - 2, checkbox_y + 2)
+                glVertex2f(checkbox_x + checkbox_size - 2, checkbox_y + checkbox_size - 2)
+                glVertex2f(checkbox_x + 2, checkbox_y + checkbox_size - 2)
+                glEnd()
+
+            # Draw "Enabled" text
+            text_surface = font.render("Enabled", True, (200, 200, 200))
+            text_data = pygame.image.tostring(text_surface, "RGBA", True)
+            text_width = text_surface.get_width()
+            text_height = text_surface.get_height()
+            
+            text_x = checkbox_x + checkbox_size + 10
+            text_y = checkbox_y + (checkbox_size - text_height) / 2
+            
+            glEnable(GL_TEXTURE_2D)
+            text_texture = glGenTextures(1)
+            glBindTexture(GL_TEXTURE_2D, text_texture)
+            glTexParameter(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+            glTexParameter(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, text_width, text_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, text_data)
+            
+            glColor4f(1, 1, 1, 1)
+            glBegin(GL_QUADS)
+            glTexCoord2f(0, 1); glVertex2f(text_x, text_y)
+            glTexCoord2f(1, 1); glVertex2f(text_x + text_width, text_y)
+            glTexCoord2f(1, 0); glVertex2f(text_x + text_width, text_y + text_height)
+            glTexCoord2f(0, 0); glVertex2f(text_x, text_y + text_height)
+            glEnd()
+            
+            glBindTexture(GL_TEXTURE_2D, 0)
+            glDeleteTextures([text_texture])
 
     # Disable blending if not needed later
     glDisable(GL_BLEND)
@@ -200,11 +242,15 @@ def main():
     renderer = Renderer(config)
     angleX = angleY = 0
     
+    # UI Constants
     show_settings_panel = False
     panel_offset = 0
     panel_width = 200
-    panel_animation_progress = 0  # Track animation from 0 to 1
-    animation_speed = 0.15  # Controls overall animation speed
+    panel_height = 300
+    padding = 10
+    row_height = 30
+    panel_animation_progress = 0
+    animation_speed = 0.15
     ui_slide_speed = 10
     settings_button_rect = pygame.Rect(display[0] - 50 - 10, 10, 50, 50)
 
@@ -232,17 +278,23 @@ def main():
                     mouse_pos = pygame.mouse.get_pos()
                     if settings_button_rect.collidepoint(mouse_pos):
                         show_settings_panel = not show_settings_panel
-                    # Check checkbox click when panel is shown
                     elif show_settings_panel:
-                        # Calculate checkbox bounds
-                        checkbox_x = display[0] - panel_offset + 15
-                        checkbox_y = 70 + 10 + 7  # panel_y + padding + offset
-                        if (checkbox_x <= mouse_pos[0] <= checkbox_x + 16 and 
-                            checkbox_y <= mouse_pos[1] <= checkbox_y + 16):
-                            config['particles']['enabled'] = not config['particles']['enabled']
-                            # Clear existing particles when disabled
-                            if not config['particles']['enabled']:
-                                game_state.particle_system.particles = []
+                        # Check category header click
+                        header_x = display[0] - panel_offset + padding
+                        header_y = 70 + padding
+                        if (header_x <= mouse_pos[0] <= header_x + panel_width - 2*padding and 
+                            header_y <= mouse_pos[1] <= header_y + row_height):
+                            config['ui_particles_expanded'] = not config.get('ui_particles_expanded', False)
+                        
+                        # Check checkbox click if category is expanded
+                        elif config.get('ui_particles_expanded', False):
+                            checkbox_x = display[0] - panel_offset + padding + 20
+                            checkbox_y = header_y + row_height + (row_height - 16) / 2
+                            if (checkbox_x <= mouse_pos[0] <= checkbox_x + 16 and 
+                                checkbox_y <= mouse_pos[1] <= checkbox_y + 16):
+                                config['particles']['enabled'] = not config['particles']['enabled']
+                                if not config['particles']['enabled']:
+                                    game_state.particle_system.particles = []
 
         # Update game state
         game_state.update(current_time)
