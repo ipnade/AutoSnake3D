@@ -39,6 +39,8 @@ def main():
                     config['snake']['colors']['grayscale'] = not config['snake']['colors']['grayscale']
                 elif event.key == pygame.K_k:
                     game_state.dying = True
+                elif event.key == pygame.K_t:  # Add this section
+                    game_state.snake.grow = True
 
         radius = 100
         camX = radius * math.cos(angleX)
