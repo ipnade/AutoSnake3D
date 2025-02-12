@@ -7,6 +7,8 @@ import numpy as np
 from config import config
 from game.renderer import Renderer
 from game.game_state import GameState
+from game.camera import Camera
+from ui_manager import UIManager
 
 def load_texture(image_path):
     texture_surface = pygame.image.load(image_path).convert_alpha()
@@ -30,345 +32,17 @@ def initialize_gl(config):
     glTranslatef(0.0, 0.0, -100)
     return display
 
-def draw_ui(display, show_panel, panel_offset, gear_texture, font):  # Add font parameter
-    # Save current projection/modelview
-    glMatrixMode(GL_PROJECTION)
-    glPushMatrix()
-    glLoadIdentity()
-    glOrtho(0, display[0], display[1], 0, -1, 1)
-    glMatrixMode(GL_MODELVIEW)
-    glPushMatrix()
-    glLoadIdentity()
-
-    # Enable blending for proper transparency
-    glEnable(GL_BLEND)
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-    
-    # Optionally, draw a black background for the button
-    button_w, button_h = 50, 50
-    button_x = display[0] - button_w - 10
-    button_y = 10
-    glColor3f(0, 0, 0)  # Black background
-    glBegin(GL_QUADS)
-    glVertex2f(button_x, button_y)
-    glVertex2f(button_x+button_w, button_y)
-    glVertex2f(button_x+button_w, button_y+button_h)
-    glVertex2f(button_x, button_y+button_h)
-    glEnd()
-
-    # Draw gear texture on top (its PNG alpha will be used)
-    glEnable(GL_TEXTURE_2D)
-    glBindTexture(GL_TEXTURE_2D, gear_texture)
-    glColor4f(1, 1, 1, 1)  # Use full brightness and the texture's alpha
-    glBegin(GL_QUADS)
-    # Top-left
-    glTexCoord2f(0, 0)
-    glVertex2f(button_x, button_y)
-    # Top-right
-    glTexCoord2f(1, 0)
-    glVertex2f(button_x+button_w, button_y)
-    # Bottom-right
-    glTexCoord2f(1, 1)
-    glVertex2f(button_x+button_w, button_y+button_h)
-    # Bottom-left
-    glTexCoord2f(0, 1)
-    glVertex2f(button_x, button_y+button_h)
-    glEnd()
-
-    glBindTexture(GL_TEXTURE_2D, 0)
-    glDisable(GL_TEXTURE_2D)
-    
-    # Draw sliding settings panel if enabled
-    if show_panel:
-        panel_width = 200
-        panel_height = 300
-        panel_x = display[0] - panel_offset
-        panel_y = 70
-        row_height = 30
-        padding = 10
-        border_thickness = 2  # Add border thickness
-
-        # Draw border
-        glColor3f(0.4, 0.4, 0.4)  # Light gray border
-        glBegin(GL_QUADS)
-        # Left border
-        glVertex2f(panel_x - border_thickness, panel_y - border_thickness)
-        glVertex2f(panel_x, panel_y - border_thickness)
-        glVertex2f(panel_x, panel_y + panel_height + border_thickness)
-        glVertex2f(panel_x - border_thickness, panel_y + panel_height + border_thickness)
-        # Top border
-        glVertex2f(panel_x - border_thickness, panel_y - border_thickness)
-        glVertex2f(panel_x + panel_width + border_thickness, panel_y - border_thickness)
-        glVertex2f(panel_x + panel_width + border_thickness, panel_y)
-        glVertex2f(panel_x - border_thickness, panel_y)
-        # Right border
-        glVertex2f(panel_x + panel_width, panel_y - border_thickness)
-        glVertex2f(panel_x + panel_width + border_thickness, panel_y - border_thickness)
-        glVertex2f(panel_x + panel_width + border_thickness, panel_y + panel_height + border_thickness)
-        glVertex2f(panel_x + panel_width, panel_y + panel_height + border_thickness)
-        # Bottom border
-        glVertex2f(panel_x - border_thickness, panel_y + panel_height)
-        glVertex2f(panel_x + panel_width + border_thickness, panel_y + panel_height)
-        glVertex2f(panel_x + panel_width + border_thickness, panel_y + panel_height + border_thickness)
-        glVertex2f(panel_x - border_thickness, panel_y + panel_height + border_thickness)
-        glEnd()
-
-        # Draw main panel background
-        glColor3f(0.2, 0.2, 0.2)  # Darker background
-        glBegin(GL_QUADS)
-        glVertex2f(panel_x, panel_y)
-        glVertex2f(panel_x+panel_width, panel_y)
-        glVertex2f(panel_x+panel_width, panel_y+panel_height)
-        glVertex2f(panel_x, panel_y+panel_height)
-        glEnd()
-
-        # Draw category header
-        row_y = panel_y + padding
-        glColor3f(0.3, 0.3, 0.3)
-        glBegin(GL_QUADS)
-        glVertex2f(panel_x + padding, row_y)
-        glVertex2f(panel_x + panel_width - padding, row_y)
-        glVertex2f(panel_x + panel_width - padding, row_y + row_height - 2)
-        glVertex2f(panel_x + padding, row_y + row_height - 2)
-        glEnd()
-
-        # Draw arrow (triangle)
-        arrow_size = 8
-        arrow_x = panel_x + padding + 5
-        arrow_y = row_y + (row_height - arrow_size) / 2
-        
-        glColor3f(0.8, 0.8, 0.8)
-        glBegin(GL_TRIANGLES)
-        if config.get('ui_particles_expanded', False):
-            # Down arrow
-            glVertex2f(arrow_x, arrow_y)
-            glVertex2f(arrow_x + arrow_size, arrow_y)
-            glVertex2f(arrow_x + arrow_size/2, arrow_y + arrow_size)
-        else:
-            # Right arrow
-            glVertex2f(arrow_x, arrow_y)
-            glVertex2f(arrow_x + arrow_size, arrow_y + arrow_size/2)
-            glVertex2f(arrow_x, arrow_y + arrow_size)
-        glEnd()
-
-        # Draw "Particles" category text
-        text_surface = font.render("Particles", True, (200, 200, 200))
-        text_data = pygame.image.tostring(text_surface, "RGBA", True)
-        text_width = text_surface.get_width()
-        text_height = text_surface.get_height()
-        
-        text_x = arrow_x + arrow_size + 10
-        text_y = row_y + (row_height - text_height) / 2
-        
-        # Render text using texture
-        glEnable(GL_TEXTURE_2D)
-        text_texture = glGenTextures(1)
-        glBindTexture(GL_TEXTURE_2D, text_texture)
-        glTexParameter(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-        glTexParameter(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, text_width, text_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, text_data)
-        
-        glColor4f(1, 1, 1, 1)
-        glBegin(GL_QUADS)
-        glTexCoord2f(0, 1); glVertex2f(text_x, text_y)
-        glTexCoord2f(1, 1); glVertex2f(text_x + text_width, text_y)
-        glTexCoord2f(1, 0); glVertex2f(text_x + text_width, text_y + text_height)
-        glTexCoord2f(0, 0); glVertex2f(text_x, text_y + text_height)
-        glEnd()
-        
-        glBindTexture(GL_TEXTURE_2D, 0)
-        glDeleteTextures([text_texture])
-
-        # Draw checkbox contents if category is expanded
-        if config.get('ui_particles_expanded', False):
-            checkbox_row_y = row_y + row_height
-            
-            # Draw checkbox row background
-            glColor3f(0.25, 0.25, 0.25)
-            glBegin(GL_QUADS)
-            glVertex2f(panel_x + padding + 15, checkbox_row_y)
-            glVertex2f(panel_x + panel_width - padding, checkbox_row_y)
-            glVertex2f(panel_x + panel_width - padding, checkbox_row_y + row_height - 2)
-            glVertex2f(panel_x + padding + 15, checkbox_row_y + row_height - 2)
-            glEnd()
-
-            # Draw enable/disable checkbox
-            checkbox_size = 16
-            checkbox_x = panel_x + padding + 20
-            checkbox_y = checkbox_row_y + (row_height - checkbox_size) / 2
-
-            # Checkbox border and fill
-            glColor3f(0.8, 0.8, 0.8)
-            glBegin(GL_LINE_LOOP)
-            glVertex2f(checkbox_x, checkbox_y)
-            glVertex2f(checkbox_x + checkbox_size, checkbox_y)
-            glVertex2f(checkbox_x + checkbox_size, checkbox_y + checkbox_size)
-            glVertex2f(checkbox_x, checkbox_y + checkbox_size)
-            glEnd()
-
-            if config['particles']['enabled']:
-                glColor3f(0.4, 0.8, 0.4)
-                glBegin(GL_QUADS)
-                glVertex2f(checkbox_x + 2, checkbox_y + 2)
-                glVertex2f(checkbox_x + checkbox_size - 2, checkbox_y + 2)
-                glVertex2f(checkbox_x + checkbox_size - 2, checkbox_y + checkbox_size - 2)
-                glVertex2f(checkbox_x + 2, checkbox_y + checkbox_size - 2)
-                glEnd()
-
-            # Draw "Enabled" text
-            text_surface = font.render("Enabled", True, (200, 200, 200))
-            text_data = pygame.image.tostring(text_surface, "RGBA", True)
-            text_width = text_surface.get_width()
-            text_height = text_surface.get_height()
-            
-            text_x = checkbox_x + checkbox_size + 10
-            text_y = checkbox_y + (checkbox_size - text_height) / 2
-            
-            glEnable(GL_TEXTURE_2D)
-            text_texture = glGenTextures(1)
-            glBindTexture(GL_TEXTURE_2D, text_texture)
-            glTexParameter(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-            glTexParameter(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, text_width, text_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, text_data)
-            
-            glColor4f(1, 1, 1, 1)
-            glBegin(GL_QUADS)
-            glTexCoord2f(0, 1); glVertex2f(text_x, text_y)
-            glTexCoord2f(1, 1); glVertex2f(text_x + text_width, text_y)
-            glTexCoord2f(1, 0); glVertex2f(text_x + text_width, text_y + text_height)
-            glTexCoord2f(0, 0); glVertex2f(text_x, text_y + text_height)
-            glEnd()
-            
-            glBindTexture(GL_TEXTURE_2D, 0)
-            glDeleteTextures([text_texture])
-
-            # Add slider for particle density
-            slider_y = checkbox_row_y + row_height + 25  # Increased from +5 to +25 for more spacing
-            slider_width = panel_width - 2 * padding - 60  # Make slider shorter
-            slider_height = 4
-            
-            # Draw slider label
-            text_surface = font.render("Particle Density", True, (200, 200, 200))
-            text_data = pygame.image.tostring(text_surface, "RGBA", True)
-            text_width = text_surface.get_width()
-            text_height = text_surface.get_height()
-            
-            text_x = panel_x + padding + 20
-            text_y = slider_y - text_height - 5
-            
-            glEnable(GL_TEXTURE_2D)
-            text_texture = glGenTextures(1)
-            glBindTexture(GL_TEXTURE_2D, text_texture)
-            glTexParameter(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-            glTexParameter(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, text_width, text_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, text_data)
-            
-            glColor4f(1, 1, 1, 1)
-            glBegin(GL_QUADS)
-            glTexCoord2f(0, 1); glVertex2f(text_x, text_y)
-            glTexCoord2f(1, 1); glVertex2f(text_x + text_width, text_y)
-            glTexCoord2f(1, 0); glVertex2f(text_x + text_width, text_y + text_height)
-            glTexCoord2f(0, 0); glVertex2f(text_x, text_y + text_height)
-            glEnd()
-            
-            glBindTexture(GL_TEXTURE_2D, 0)
-            glDeleteTextures([text_texture])
-
-            # Draw particle count value
-            value_text = str(config['particles']['count'])
-            text_surface = font.render(value_text, True, (200, 200, 200))
-            text_data = pygame.image.tostring(text_surface, "RGBA", True)
-            text_width = text_surface.get_width()
-            text_height = text_surface.get_height()
-            
-            # Position the number to the right of the slider
-            text_x = panel_x + padding + 20 + slider_width + 10
-            text_y = slider_y - text_height/2
-            
-            glEnable(GL_TEXTURE_2D)
-            text_texture = glGenTextures(1)
-            glBindTexture(GL_TEXTURE_2D, text_texture)
-            glTexParameter(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-            glTexParameter(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, text_width, text_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, text_data)
-            
-            glColor4f(1, 1, 1, 1)
-            glBegin(GL_QUADS)
-            glTexCoord2f(0, 1); glVertex2f(text_x, text_y)
-            glTexCoord2f(1, 1); glVertex2f(text_x + text_width, text_y)
-            glTexCoord2f(1, 0); glVertex2f(text_x + text_width, text_y + text_height)
-            glTexCoord2f(0, 0); glVertex2f(text_x, text_y + text_height)
-            glEnd()
-            
-            glBindTexture(GL_TEXTURE_2D, 0)
-            glDeleteTextures([text_texture])
-            
-            # Draw slider track
-            glColor3f(0.3, 0.3, 0.3)
-            glBegin(GL_QUADS)
-            glVertex2f(panel_x + padding + 20, slider_y)
-            glVertex2f(panel_x + padding + 20 + slider_width, slider_y)
-            glVertex2f(panel_x + padding + 20 + slider_width, slider_y + slider_height)
-            glVertex2f(panel_x + padding + 20, slider_y + slider_height)
-            glEnd()
-            
-            # Draw slider handle
-            handle_width = 10
-            handle_height = 16
-            value_range = config['particles']['max_count'] - config['particles']['min_count']
-            normalized_value = (config['particles']['count'] - config['particles']['min_count']) / value_range
-            handle_x = panel_x + padding + 20 + (slider_width - handle_width) * normalized_value
-            
-            glColor3f(0.8, 0.8, 0.8)
-            glBegin(GL_QUADS)
-            glVertex2f(handle_x, slider_y - handle_height/4)
-            glVertex2f(handle_x + handle_width, slider_y - handle_height/4)
-            glVertex2f(handle_x + handle_width, slider_y + handle_height)
-            glVertex2f(handle_x, slider_y + handle_height)
-            glEnd()
-
-    # Disable blending if not needed later
-    glDisable(GL_BLEND)
-    
-    # Restore matrices
-    glPopMatrix()
-    glMatrixMode(GL_PROJECTION)
-    glPopMatrix()
-    glMatrixMode(GL_MODELVIEW)
-
-def ease_out_quad(t):
-    return 1 - (1 - t) * (1 - t)
-
 def main():
     display = initialize_gl(config)
     gear_texture, gear_w, gear_h = load_texture("textures/gear.png")
-    
-    # Add font initialization after pygame is initialized
-    font = pygame.font.Font(None, 24)  # None uses default system font, 24 is size
     
     clock = pygame.time.Clock()
     pygame.display.gl_set_attribute(pygame.GL_SWAP_CONTROL, int(config['display']['vsync']))
 
     game_state = GameState(config)
     renderer = Renderer(config)
-    angleX = angleY = 0
-    
-    # UI Constants
-    show_settings_panel = False
-    panel_offset = 0
-    panel_width = 200
-    panel_height = 300
-    padding = 10
-    row_height = 30
-    panel_animation_progress = 0
-    animation_speed = 0.15
-    ui_slide_speed = 10
-    settings_button_rect = pygame.Rect(display[0] - 50 - 10, 10, 50, 50)
-
-    # Initialize font
-    font = pygame.font.SysFont("Arial", 18)
-
-    dragging_slider = False
+    ui_manager = UIManager(config, display)
+    camera = Camera(config)
 
     while True:
         clock.tick(config['display']['fps'])
@@ -386,69 +60,16 @@ def main():
                     game_state.dying = True
                 elif event.key == pygame.K_t:
                     game_state.snake.grow = True
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 1:  # Left click
-                    mouse_pos = pygame.mouse.get_pos()
-                    if settings_button_rect.collidepoint(mouse_pos):
-                        show_settings_panel = not show_settings_panel
-                    elif show_settings_panel:
-                        # Check category header click
-                        header_x = display[0] - panel_offset + padding
-                        header_y = 70 + padding
-                        if (header_x <= mouse_pos[0] <= header_x + panel_width - 2*padding and 
-                            header_y <= mouse_pos[1] <= header_y + row_height):
-                            config['ui_particles_expanded'] = not config.get('ui_particles_expanded', False)
-                        
-                        # Check checkbox click if category is expanded
-                        elif config.get('ui_particles_expanded', False):
-                            checkbox_x = display[0] - panel_offset + padding + 20
-                            checkbox_y = header_y + row_height + (row_height - 16) / 2
-                            if (checkbox_x <= mouse_pos[0] <= checkbox_x + 16 and 
-                                checkbox_y <= mouse_pos[1] <= checkbox_y + 16):
-                                config['particles']['enabled'] = not config['particles']['enabled']
-                                if not config['particles']['enabled']:
-                                    game_state.particle_system.particles = []
-                        
-                        # Add slider interaction
-                        if config.get('ui_particles_expanded', False):
-                            checkbox_row_y = header_y + row_height
-                            slider_y = checkbox_row_y + row_height + 25
-                            slider_x = display[0] - panel_offset + padding + 20
-                            slider_width = panel_width - 2 * padding - 60  # Match the visual width
-                            
-                            # Check if click is within slider bounds
-                            if (slider_x <= mouse_pos[0] <= slider_x + slider_width and
-                                slider_y - 8 <= mouse_pos[1] <= slider_y + 20):
-                                normalized_pos = (mouse_pos[0] - slider_x) / slider_width
-                                config['particles']['count'] = int(
-                                    config['particles']['min_count'] + 
-                                    normalized_pos * (config['particles']['max_count'] - config['particles']['min_count'])
-                                )
-                                dragging_slider = True
-            elif event.type == pygame.MOUSEBUTTONUP:
-                if event.button == 1:
-                    dragging_slider = False
-            elif event.type == pygame.MOUSEMOTION:
-                if dragging_slider and show_settings_panel:
-                    slider_x = display[0] - panel_offset + padding + 20
-                    slider_width = panel_width - 2 * padding - 60  # Match the visual width
-                    normalized_pos = max(0, min(1, (event.pos[0] - slider_x) / slider_width))
-                    config['particles']['count'] = int(
-                        config['particles']['min_count'] + 
-                        normalized_pos * (config['particles']['max_count'] - config['particles']['min_count'])
-                    )
+            else:
+                ui_manager.handle_event(event, game_state)
 
-        # Update game state
+        # Update game state, camera and UI
         game_state.update(current_time)
+        camera.update()
+        ui_manager.update()
 
-        radius = 100
-        camX = radius * math.cos(angleX)
-        camY = radius * math.sin(angleY) * 0.5
-        camZ = radius * math.sin(angleX)
-        
-        renderer.setup_frame(display, (camX, camY, camZ))
-        
-        # Enable depth testing before 3D rendering
+        # Render frame
+        renderer.setup_frame(display, camera.get_position())
         glEnable(GL_DEPTH_TEST)
         
         renderer.draw_grid()
@@ -461,32 +82,13 @@ def main():
                 game_state.particle_system.emit_particles(
                     position=game_state.last_food_pos, 
                     color=[1.0, 0.0, 0.0],
-                    count=config['particles']['count']  # Add this line to pass the count
+                    count=config['particles']['count']
                 )
                 game_state.food_collected = False
 
-        # Disable depth testing for UI elements
         glDisable(GL_DEPTH_TEST)
-        
-        # Update panel animation
-        if show_settings_panel:
-            panel_animation_progress = min(1, panel_animation_progress + animation_speed)
-        else:
-            panel_animation_progress = max(0, panel_animation_progress - animation_speed)
-            
-        # Apply easing function to get smooth deceleration
-        eased_progress = ease_out_quad(panel_animation_progress)
-        panel_offset = panel_width * eased_progress
-
-        # Pass gear_texture and font to draw_ui
-        draw_ui(display, panel_offset > 0, panel_offset, gear_texture, font)
+        ui_manager.draw(gear_texture)
         pygame.display.flip()
-        
-        if config['effects']['smooth_camera']:
-            angleX += config['camera']['rotation_speed']['x']
-            angleY += config['camera']['rotation_speed']['y']
-
-        glDisable(GL_DEPTH_TEST)
 
 if __name__ == "__main__":
     main()

@@ -12,6 +12,12 @@ class Camera:
         if self.config['effects']['smooth_camera']:
             self.angleX += self.config['camera']['rotation_speed']['x']
             self.angleY += self.config['camera']['rotation_speed']['y']
+    
+    def get_position(self):
+        camX = self.radius * math.cos(self.angleX)
+        camY = self.radius * math.sin(self.angleY) * 0.5
+        camZ = self.radius * math.sin(self.angleX)
+        return (camX, camY, camZ)
             
     def setup_view(self, display):
         camX = self.radius * math.cos(self.angleX)
