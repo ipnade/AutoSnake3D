@@ -159,6 +159,19 @@ def draw_cube(position, size=1, color=(1, 1, 1)):
     glVertex3f(x-size, y+size, z-size)
     glEnd()
 
+def draw_sphere(position, radius=1.0, color=(1, 1, 1)):
+    x, y, z = position
+    glPushMatrix()
+    glTranslatef(x, y, z)
+    glColor3f(*color)
+    
+    # Create a quadric object for the sphere
+    quadric = gluNewQuadric()
+    gluQuadricNormals(quadric, GLU_SMOOTH)
+    gluSphere(quadric, radius, 32, 32)  # radius, slices, stacks
+    
+    glPopMatrix()
+
 def draw_snake(snake_body):
     for i, segment in enumerate(snake_body):
         # Calculate base gradient from head to tail
@@ -196,6 +209,7 @@ food = spawn_food(snake.body)
 game_speed = 25
 last_move_time = 0
 angleX = angleY = angleZ = 0
+food_bob_time = 0
 
 # Main game loop
 while True:
@@ -236,8 +250,13 @@ while True:
 
     draw_grid()
     
+    # Bobbing effect for food
+    food_bob_time += 0.1
+    bob_offset = math.sin(food_bob_time) * 0.5
+    
     draw_snake(snake.body)
-    draw_cube(food, 1.0, (1, 0, 0))
+    food_pos = (food[0], food[1] + bob_offset, food[2])
+    draw_sphere(food_pos, 0.8, (1, 0, 0))
     
     pygame.display.flip()
     
