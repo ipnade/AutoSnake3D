@@ -21,6 +21,9 @@ class GameState:
         self.death_complete = False
         self.death_complete_time = 0
         self.death_speed = 500  # Start slow (500ms between explosions)
+        # Add new attributes
+        self.food_collected = False
+        self.last_food_pos = None
         
     def spawn_food(self, snake_body):
         while True:
@@ -132,12 +135,11 @@ class GameState:
             self.snake.move(next_move)
             
             if self.snake.body[0] == self.food:
+                # Store food position before spawning new food
+                if self.config['particles']['enabled']:
+                    self.last_food_pos = self.food
+                    self.food_collected = True
                 self.snake.grow = True
-                self.particle_system.emit_particles(
-                    position=self.food,
-                    count=30,
-                    color=(1.0, 0.0, 0.0)
-                )
                 self.food = self.spawn_food(self.snake.body)
             
             if self.snake.check_collision():

@@ -30,7 +30,7 @@ def initialize_gl(config):
     glTranslatef(0.0, 0.0, -100)
     return display
 
-def draw_ui(display, show_panel, panel_offset, gear_texture):
+def draw_ui(display, show_panel, panel_offset, gear_texture, font):  # Add font parameter
     # Save current projection/modelview
     glMatrixMode(GL_PROJECTION)
     glPushMatrix()
@@ -96,16 +96,77 @@ def draw_ui(display, show_panel, panel_offset, gear_texture):
         glVertex2f(panel_x, panel_y+panel_height)
         glEnd()
 
-        # Draw rows
-        for i in range(9):  # Number of setting rows
+        # Draw first row with checkbox
+        row_y = panel_y + padding
+        
+        # Draw row background
+        glColor3f(0.3, 0.3, 0.3)
+        glBegin(GL_QUADS)
+        glVertex2f(panel_x + padding, row_y)
+        glVertex2f(panel_x + panel_width - padding, row_y)
+        glVertex2f(panel_x + panel_width - padding, row_y + row_height - 2)
+        glVertex2f(panel_x + padding, row_y + row_height - 2)
+        glEnd()
+
+        # Draw checkbox
+        checkbox_size = 16
+        checkbox_x = panel_x + padding + 5
+        checkbox_y = row_y + (row_height - checkbox_size) / 2
+
+        # Checkbox border
+        glColor3f(0.8, 0.8, 0.8)
+        glBegin(GL_LINE_LOOP)
+        glVertex2f(checkbox_x, checkbox_y)
+        glVertex2f(checkbox_x + checkbox_size, checkbox_y)
+        glVertex2f(checkbox_x + checkbox_size, checkbox_y + checkbox_size)
+        glVertex2f(checkbox_x, checkbox_y + checkbox_size)
+        glEnd()
+
+        # Fill checkbox if enabled
+        if config['particles']['enabled']:
+            glColor3f(0.4, 0.8, 0.4)  # Green checkmark color
+            glBegin(GL_QUADS)
+            glVertex2f(checkbox_x + 2, checkbox_y + 2)
+            glVertex2f(checkbox_x + checkbox_size - 2, checkbox_y + 2)
+            glVertex2f(checkbox_x + checkbox_size - 2, checkbox_y + checkbox_size - 2)
+            glVertex2f(checkbox_x + 2, checkbox_y + checkbox_size - 2)
+            glEnd()
+
+        # Add text "Particles" next to checkbox
+        text_surface = font.render("Particles", True, (200, 200, 200))
+        text_data = pygame.image.tostring(text_surface, "RGBA", True)
+        text_width = text_surface.get_width()
+        text_height = text_surface.get_height()
+        
+        glEnable(GL_TEXTURE_2D)
+        text_texture = glGenTextures(1)
+        glBindTexture(GL_TEXTURE_2D, text_texture)
+        glTexParameter(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+        glTexParameter(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, text_width, text_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, text_data)
+        
+        text_x = checkbox_x + checkbox_size + 10
+        text_y = checkbox_y - 2
+        
+        glColor4f(1, 1, 1, 1)
+        glBegin(GL_QUADS)
+        # Change texture coordinates to flip vertically
+        glTexCoord2f(0, 1); glVertex2f(text_x, text_y)
+        glTexCoord2f(1, 1); glVertex2f(text_x + text_width, text_y)
+        glTexCoord2f(1, 0); glVertex2f(text_x + text_width, text_y + text_height)
+        glTexCoord2f(0, 0); glVertex2f(text_x, text_y + text_height)
+        glEnd()
+        
+        glBindTexture(GL_TEXTURE_2D, 0)
+        glDeleteTextures([text_texture])
+
+        # Draw remaining rows
+        for i in range(1, 9):
             row_y = panel_y + (i * row_height) + padding
-            
-            # Alternate row colors
             if i % 2 == 0:
-                glColor3f(0.3, 0.3, 0.3)  # Slightly lighter
+                glColor3f(0.3, 0.3, 0.3)
             else:
-                glColor3f(0.25, 0.25, 0.25)  # Slightly darker
-                
+                glColor3f(0.25, 0.25, 0.25)
             glBegin(GL_QUADS)
             glVertex2f(panel_x + padding, row_y)
             glVertex2f(panel_x + panel_width - padding, row_y)
@@ -126,9 +187,11 @@ def ease_out_quad(t):
     return 1 - (1 - t) * (1 - t)
 
 def main():
-    display = initialize_gl(config)  # Initialize pygame and set display mode
-    # Now that the display is initialized, load the texture
+    display = initialize_gl(config)
     gear_texture, gear_w, gear_h = load_texture("textures/gear.png")
+    
+    # Add font initialization after pygame is initialized
+    font = pygame.font.Font(None, 24)  # None uses default system font, 24 is size
     
     clock = pygame.time.Clock()
     pygame.display.gl_set_attribute(pygame.GL_SWAP_CONTROL, int(config['display']['vsync']))
@@ -145,6 +208,9 @@ def main():
     ui_slide_speed = 10
     settings_button_rect = pygame.Rect(display[0] - 50 - 10, 10, 50, 50)
 
+    # Initialize font
+    font = pygame.font.SysFont("Arial", 18)
+
     while True:
         clock.tick(config['display']['fps'])
         for event in pygame.event.get():
@@ -159,10 +225,21 @@ def main():
                 elif event.key == pygame.K_t:
                     game_state.snake.grow = True
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 1:
+                if event.button == 1:  # Left click
                     mouse_pos = pygame.mouse.get_pos()
                     if settings_button_rect.collidepoint(mouse_pos):
                         show_settings_panel = not show_settings_panel
+                    # Check checkbox click when panel is shown
+                    elif show_settings_panel:
+                        # Calculate checkbox bounds
+                        checkbox_x = display[0] - panel_offset + 15
+                        checkbox_y = 70 + 10 + 7  # panel_y + padding + offset
+                        if (checkbox_x <= mouse_pos[0] <= checkbox_x + 16 and 
+                            checkbox_y <= mouse_pos[1] <= checkbox_y + 16):
+                            config['particles']['enabled'] = not config['particles']['enabled']
+                            # Clear existing particles when disabled
+                            if not config['particles']['enabled']:
+                                game_state.particle_system.particles = []
 
         radius = 100
         camX = radius * math.cos(angleX)
@@ -171,6 +248,7 @@ def main():
         
         renderer.setup_frame(display, (camX, camY, camZ))
         
+        # Inside the main game loop, where food collection is handled
         if not game_state.update(pygame.time.get_ticks()):
             pygame.quit()
             quit()
@@ -179,8 +257,17 @@ def main():
         renderer.draw_snake(game_state.get_visible_segments())
         renderer.draw_sphere(game_state.get_food_position(), 0.8, (1, 0, 0))
         
+        # Only emit and draw particles if enabled
         if config['particles']['enabled']:
             game_state.particle_system.draw()
+            # Move particle emission check here so positions aren't stored when disabled
+            if game_state.food_collected:
+                # Change color to pure red (RGB: 1.0, 0.0, 0.0)
+                game_state.particle_system.emit_particles(
+                    position=game_state.last_food_pos, 
+                    color=[1.0, 0.0, 0.0]  # Use list instead of tuple for consistency
+                )
+                game_state.food_collected = False  # Reset the flag after handling
 
         # Update panel animation
         if show_settings_panel:
@@ -192,8 +279,8 @@ def main():
         eased_progress = ease_out_quad(panel_animation_progress)
         panel_offset = panel_width * eased_progress
 
-        # Pass gear_texture to draw_ui
-        draw_ui(display, panel_offset > 0, panel_offset, gear_texture)
+        # Pass gear_texture and font to draw_ui
+        draw_ui(display, panel_offset > 0, panel_offset, gear_texture, font)
         pygame.display.flip()
         
         if config['effects']['smooth_camera']:
