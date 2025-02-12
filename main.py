@@ -6,6 +6,7 @@ import numpy as np
 import math
 import random
 from snake import Snake
+from particle_system import ParticleSystem
 
 # Initialize Pygame and OpenGL
 pygame.init()
@@ -210,6 +211,7 @@ game_speed = 25
 last_move_time = 0
 angleX = angleY = angleZ = 0
 food_bob_time = 0
+particle_system = ParticleSystem()
 
 # Main game loop
 while True:
@@ -240,6 +242,12 @@ while True:
         
         if snake.body[0] == food:
             snake.grow = True
+            # Emit particles at food location
+            particle_system.emit_particles(
+                position=food,
+                count=30,
+                color=(1.0, 0.0, 0.0)  # Match food color
+            )
             food = spawn_food(snake.body)
         
         if snake.check_collision():
@@ -257,6 +265,10 @@ while True:
     draw_snake(snake.body)
     food_pos = (food[0], food[1] + bob_offset, food[2])
     draw_sphere(food_pos, 0.8, (1, 0, 0))
+    
+    # Update and draw particles
+    particle_system.update(1.0/30.0)  # dt based on frame rate
+    particle_system.draw()
     
     pygame.display.flip()
     
