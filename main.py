@@ -7,10 +7,11 @@ import math
 import random
 from snake import Snake
 from particle_system import ParticleSystem
+from config import config
 
 # Initialize Pygame and OpenGL
 pygame.init()
-display = (1600, 900)
+display = (config['display']['width'], config['display']['height'])
 pygame.display.set_mode(display, DOUBLEBUF | OPENGL)
 glEnable(GL_DEPTH_TEST)
 glDepthFunc(GL_LESS)
@@ -18,7 +19,7 @@ gluPerspective(45, (display[0]/display[1]), 0.1, 500.0)  # Increased far plane f
 glTranslatef(0.0, 0.0, -100)
 
 clock = pygame.time.Clock()
-pygame.display.gl_set_attribute(pygame.GL_SWAP_CONTROL, 1)
+pygame.display.gl_set_attribute(pygame.GL_SWAP_CONTROL, int(config['display']['vsync']))
 
 def draw_grid():
     glBegin(GL_LINES)
@@ -175,32 +176,24 @@ def draw_sphere(position, radius=1.0, color=(1, 1, 1)):
 
 def draw_snake(snake_body):
     for i, segment in enumerate(snake_body):
-        # Calculate base gradient from head to tail
         t = i / len(snake_body)
         
-        # Add tiny offset to reduce z-fighting
         x, y, z = segment
-        offset = 0.02 * i  # Small cumulative offset for each segment
+        offset = config['snake']['z_fighting_offset'] * i
         adjusted_pos = (x + offset, y + offset, z + offset)
         
-        if i == 0:  # Head
-            # Golden yellow head, slightly larger
-            color = (1.0, 0.843, 0.0)
-            size = 1.0
-        else:  # Body with pattern
-            # Slightly smaller body segments
-            size = 0.95
-            # Create a repeating pattern every 3 segments
-            pattern = i % 3
-            if pattern == 1:
-                # Dark green segments
-                color = (0.0, 0.5 - t * 0.3, 0.0)
-            elif pattern == 2:
-                # Light green segments
-                color = (0.2, 0.8 - t * 0.3, 0.2)
+        if i == 0:
+            color = config['snake']['colors']['head']
+            size = config['snake']['size']['head']
+        else:
+            size = config['snake']['size']['body']
+            pattern = i % len(config['snake']['colors']['body_pattern'])
+            base_color = config['snake']['colors']['body_pattern'][pattern]
+            
+            if config['effects']['gradient_fade']:
+                color = tuple(c * (1 - t * 0.3) for c in base_color)
             else:
-                # Yellow-green segments
-                color = (0.4, 0.7 - t * 0.3, 0.0)
+                color = base_color
         
         draw_cube(adjusted_pos, size, color)
 
@@ -215,7 +208,7 @@ particle_system = ParticleSystem()
 
 # Main game loop
 while True:
-    clock.tick(30)
+    clock.tick(config['display']['fps'])
     
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -267,11 +260,13 @@ while True:
     draw_sphere(food_pos, 0.8, (1, 0, 0))
     
     # Update and draw particles
-    particle_system.update(1.0/30.0)  # dt based on frame rate
-    particle_system.draw()
+    if config['particles']['enabled']:
+        particle_system.update(1.0/config['display']['fps'])
+        particle_system.draw()
     
     pygame.display.flip()
     
     # Update camera rotation
-    angleX += 0.002
-    angleY += 0.001
+    if config['effects']['smooth_camera']:
+        angleX += config['camera']['rotation_speed']['x']
+        angleY += config['camera']['rotation_speed']['y']
