@@ -42,6 +42,6 @@ A self-playing 3D Snake game built with Pygame and OpenGL. The game runs autonom
 Contributions are welcome! If you have suggestions or improvements, feel free to open an issue or submit a pull request.
 
 ## License
-[GNU General Public License v3.0]
+[GNU General Public License v3.0](LICENSE)
 
 ---
