@@ -37,6 +37,8 @@ def main():
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_g:
                     config['snake']['colors']['grayscale'] = not config['snake']['colors']['grayscale']
+                elif event.key == pygame.K_k:
+                    game_state.dying = True
 
         radius = 100
         camX = radius * math.cos(angleX)
@@ -50,7 +52,7 @@ def main():
             quit()
 
         renderer.draw_grid()
-        renderer.draw_snake(game_state.snake.body)
+        renderer.draw_snake(game_state.get_visible_segments())
         renderer.draw_sphere(game_state.get_food_position(), 0.8, (1, 0, 0))
         
         if config['particles']['enabled']:

@@ -6,6 +6,7 @@ from OpenGL.GL import *
 class ParticleSystem:
     def __init__(self):
         self.particles = []
+        glPointSize(5.0)  # Larger point size for better visibility
 
     def emit_particles(self, position, count=20, color=(1.0, 0.5, 0.0)):
         for _ in range(count):
@@ -27,27 +28,51 @@ class ParticleSystem:
                 for c in color
             ]
             
-            self.particles.append(
-                Particle(
-                    position=position,
-                    velocity=velocity,
-                    color=varied_color,
-                    lifetime=random.uniform(0.5, 2.0)
-                )
-            )
+            self.emit_particle(position, velocity, varied_color, random.uniform(0.5, 2.0))
+
+    def emit_particle(self, position, velocity, color, lifetime):
+        self.particles.append({
+            'position': list(position),
+            'velocity': velocity,
+            'color': color,
+            'lifetime': lifetime,
+            'max_lifetime': lifetime
+        })
 
     def update(self, dt):
-        # Update all particles and remove dead ones
-        self.particles = [p for p in self.particles if p.is_alive()]
         for particle in self.particles:
-            particle.update(dt)
+            # Update position
+            particle['position'][0] += particle['velocity'][0] * dt
+            particle['position'][1] += particle['velocity'][1] * dt
+            particle['position'][2] += particle['velocity'][2] * dt
+            
+            # Add gravity
+            particle['velocity'][1] -= 25.0 * dt  # Stronger gravity effect
+            
+            # Update lifetime
+            particle['lifetime'] -= dt
+        
+        # Remove dead particles
+        self.particles = [p for p in self.particles if p['lifetime'] > 0]
 
     def draw(self):
-        # Enable blending for transparent particles
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
         
+        glBegin(GL_POINTS)
         for particle in self.particles:
-            particle.draw()
+            alpha = particle['lifetime'] / particle['max_lifetime']
+            glColor4f(
+                particle['color'][0],
+                particle['color'][1],
+                particle['color'][2],
+                alpha
+            )
+            glVertex3f(
+                particle['position'][0],
+                particle['position'][1],
+                particle['position'][2]
+            )
+        glEnd()
         
         glDisable(GL_BLEND)

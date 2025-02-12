@@ -6,12 +6,21 @@ from particle_system import ParticleSystem
 class GameState:
     def __init__(self, config):
         self.config = config
+        self.reset()
+        
+    def reset(self):
         self.snake = Snake()
         self.food = self.spawn_food(self.snake.body)
         self.game_speed = 25
         self.last_move_time = 0
         self.food_bob_time = 0
         self.particle_system = ParticleSystem()
+        self.dying = False
+        self.death_animation_segment = 0
+        self.last_death_effect = 0
+        self.death_complete = False
+        self.death_complete_time = 0
+        self.death_speed = 500  # Start slow (500ms between explosions)
         
     def spawn_food(self, snake_body):
         while True:
@@ -74,6 +83,50 @@ class GameState:
         return current_direction
 
     def update(self, current_time):
+        # Update particles regardless of game state
+        if self.config['particles']['enabled']:
+            self.particle_system.update(1.0/self.config['display']['fps'])
+
+        if self.dying:
+            if current_time - self.last_death_effect >= self.death_speed:
+                if self.death_animation_segment < len(self.snake.body):
+                    # Get segment from tail (last index - current animation step)
+                    segment_index = len(self.snake.body) - 1 - self.death_animation_segment
+                    segment = self.snake.body[segment_index]
+                    
+                    # Calculate color for current segment
+                    if self.config['snake']['colors']['grayscale']:
+                        color = [1.0 - (segment_index/len(self.snake.body))] * 3
+                    else:
+                        color = [0.0, 1.0 - (segment_index/(2*len(self.snake.body))), 0.0]
+                    
+                    # Emit more particles with higher velocity
+                    for _ in range(30):
+                        velocity = [
+                            random.uniform(-15, 15),
+                            random.uniform(5, 20),  # More upward velocity
+                            random.uniform(-15, 15)
+                        ]
+                        self.particle_system.emit_particle(
+                            position=segment,
+                            velocity=velocity,
+                            color=color,
+                            lifetime=random.uniform(0.5, 1.5)
+                        )
+                    
+                    # Accelerate the death animation
+                    self.death_speed = max(50, 500 - (self.death_animation_segment * 25))
+                    self.death_animation_segment += 1
+                    self.last_death_effect = current_time
+                elif not self.death_complete:
+                    self.death_complete = True
+                    self.death_complete_time = current_time
+                elif current_time - self.death_complete_time >= 3000:  # 3 second wait
+                    self.reset()
+                    return True
+            return True
+
+        # Original update logic for live snake
         if current_time - self.last_move_time >= self.game_speed:
             next_move = self.get_next_move()
             self.snake.move(next_move)
@@ -88,17 +141,21 @@ class GameState:
                 self.food = self.spawn_food(self.snake.body)
             
             if self.snake.check_collision():
-                return False
+                self.dying = True
+                return True
                 
             self.last_move_time = current_time
             
         self.food_bob_time += 0.1
-        
-        if self.config['particles']['enabled']:
-            self.particle_system.update(1.0/self.config['display']['fps'])
         
         return True
 
     def get_food_position(self):
         bob_offset = math.sin(self.food_bob_time) * 0.5
         return (self.food[0], self.food[1] + bob_offset, self.food[2])
+
+    def get_visible_segments(self):
+        if not self.dying:
+            return self.snake.body
+        # Return all segments except the ones that have been destroyed
+        return self.snake.body[:(len(self.snake.body) - self.death_animation_segment)]
