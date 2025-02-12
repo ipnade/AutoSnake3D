@@ -25,11 +25,20 @@ config = {
         'initial_length': 1,
         'speed': 25,  # Lower = faster
         'colors': {
-            'head': (1.0, 0.843, 0.0),  # Golden yellow
+            'grayscale': False,  # Toggle for grayscale mode
+            'grayscale_palette': {
+                'head': (1.0, 1.0, 1.0),  # White
+                'body_pattern': [
+                    (0.8, 0.8, 0.8),  # Light gray
+                    (0.6, 0.6, 0.6),  # Medium gray
+                    (0.4, 0.4, 0.4)   # Dark gray
+                ]
+            },
+            'head': (1.0, 0.843, 0.0),  # Original golden yellow
             'body_pattern': [
-                (0.0, 0.5, 0.0),  # Dark green
-                (0.2, 0.8, 0.2),  # Light green
-                (0.4, 0.7, 0.0)   # Yellow-green
+                (0.0, 0.5, 0.0),  # Original dark green
+                (0.2, 0.8, 0.2),  # Original light green
+                (0.4, 0.7, 0.0)   # Original yellow-green
             ]
         },
         'size': {

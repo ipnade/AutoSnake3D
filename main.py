@@ -182,18 +182,28 @@ def draw_snake(snake_body):
         offset = config['snake']['z_fighting_offset'] * i
         adjusted_pos = (x + offset, y + offset, z + offset)
         
-        if i == 0:
-            color = config['snake']['colors']['head']
-            size = config['snake']['size']['head']
-        else:
-            size = config['snake']['size']['body']
-            pattern = i % len(config['snake']['colors']['body_pattern'])
-            base_color = config['snake']['colors']['body_pattern'][pattern]
-            
-            if config['effects']['gradient_fade']:
-                color = tuple(c * (1 - t * 0.3) for c in base_color)
+        if config['snake']['colors']['grayscale']:
+            if i == 0:
+                color = config['snake']['colors']['grayscale_palette']['head']
+                size = config['snake']['size']['head']
             else:
-                color = base_color
+                size = config['snake']['size']['body']
+                # For grayscale, we'll use a smooth gradient from light to dark
+                brightness = 1.0 - (t * 0.7)  # Gradually darken from head to tail
+                color = (brightness, brightness, brightness)
+        else:
+            if i == 0:
+                color = config['snake']['colors']['head']
+                size = config['snake']['size']['head']
+            else:
+                size = config['snake']['size']['body']
+                pattern = i % len(config['snake']['colors']['body_pattern'])
+                base_color = config['snake']['colors']['body_pattern'][pattern]
+                
+                if config['effects']['gradient_fade']:
+                    color = tuple(c * (1 - t * 0.3) for c in base_color)
+                else:
+                    color = base_color
         
         draw_cube(adjusted_pos, size, color)
 
@@ -214,6 +224,9 @@ while True:
         if event.type == pygame.QUIT:
             pygame.quit()
             quit()
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_g:  # Press 'G' to toggle grayscale
+                config['snake']['colors']['grayscale'] = not config['snake']['colors']['grayscale']
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     glLoadIdentity()

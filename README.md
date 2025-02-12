@@ -31,6 +31,7 @@ A self-playing 3D Snake game built with Pygame and OpenGL, designed to be used a
 
 ## Usage
 - Launch the script to watch the AI-controlled snake in action.
+- Press 'G' to toggle between normal and grayscale color modes.
 - Future updates will include a way to set it as a live wallpaper on various operating systems.
 
 ## Planned Features
