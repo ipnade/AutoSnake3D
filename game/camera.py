@@ -16,6 +16,10 @@ class Camera:
         self.rotation_velocity_yaw = 0.0
         self.rotation_velocity_pitch = 0.0
         self.friction = 0.95
+        # Add time tracking for smooth pitch oscillation
+        self.time = 0.0
+        # Add a pitch oscillation speed parameter
+        self.pitch_speed = 0.001  # Reduced from 0.01 for slower oscillation
 
     def update(self):
         # Apply momentum if available; otherwise, auto-spin.
@@ -54,10 +58,18 @@ class Camera:
     def auto_spin(self):
         if not self.config['camera']['auto_rotate']:
             return
+            
+        # Update yaw rotation as before
         spin_speed_yaw = self.config['camera']['rotation_speed']['x']
-        spin_speed_pitch = self.config['camera']['rotation_speed']['y']
         self.yaw = (self.yaw + spin_speed_yaw) % (2 * math.pi)
-        self.pitch = clamp(self.pitch + spin_speed_pitch, -math.pi/2, math.pi/2)
+        
+        # Use slower time increment for pitch oscillation
+        self.time += self.pitch_speed
+        amplitude = self.config['camera']['y_amplitude']
+        target_pitch = math.sin(self.time) * amplitude
+        
+        # Smoothly interpolate current pitch to target pitch
+        self.pitch = self.pitch * 0.95 + target_pitch * 0.05
 
     def setup_view(self, display):
         camX, camY, camZ = self.get_position()

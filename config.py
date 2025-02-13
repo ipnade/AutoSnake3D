@@ -15,11 +15,11 @@ config = {
         'distance': 100,
         'auto_rotate': True,  # Add this line
         'rotation_speed': {
-            'x': 0.002,
-            'y': 0.001,
+            'x': 0.001,  # Reduce from 0.002 to 0.001 for slower rotation
+            'y': 0.0005, # Reduce from 0.001 to 0.0005 for slower vertical movement
             'multiplier': 1.0  # Add this line
         },
-        'y_amplitude': 0.5  # How much the camera moves up/down
+        'y_amplitude': 0.5,  # Controls how far up/down the camera tilts
     },
     
     # Snake settings
