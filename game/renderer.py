@@ -117,10 +117,21 @@ class Renderer:
             vertices.extend(cube_vertices)
             
             # Calculate color based on position in snake
-            if self.config['snake']['colors']['grayscale']:
-                color = [1.0 - (i/len(snake_body))] * 3
+            if self.config['snake']['colors']['custom_color']:
+                # Get base color and apply gradient
+                r, g, b = self.config['snake']['colors']['primary_color']
+                intensity = self.config['snake']['colors']['gradient_intensity']
+                fade = 1.0 - (i/len(snake_body)) * intensity
+                # Ensure color values are properly clamped
+                color = [max(0.0, min(1.0, c * fade)) for c in (r, g, b)]
             else:
-                color = [0.0, 1.0 - (i/(2*len(snake_body))), 0.0]
+                # Use default colors
+                if i == 0:  # Head
+                    color = self.config['snake']['colors']['default_colors']['head']
+                else:
+                    pattern = self.config['snake']['colors']['default_colors']['body_pattern']
+                    color = pattern[i % len(pattern)]
+                    
             colors.extend([color] * 8)
         
         # Create VBOs if they don't exist

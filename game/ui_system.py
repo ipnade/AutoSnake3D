@@ -1,5 +1,6 @@
 import imgui
 from imgui.integrations.pygame import PygameRenderer
+import colorsys  # Add this import
 
 
 class UISystem:
@@ -80,10 +81,37 @@ class UISystem:
         # Snake Settings
         expanded, visible = imgui.collapsing_header("Snake")
         if expanded:
-            changed, self.config['snake']['colors']['grayscale'] = imgui.checkbox(
-                "Grayscale Mode [G]", 
-                self.config['snake']['colors']['grayscale']
+            changed, self.config['snake']['colors']['custom_color'] = imgui.checkbox(
+                "Custom Color", 
+                self.config['snake']['colors']['custom_color']
             )
+            
+            if self.config['snake']['colors']['custom_color']:
+                # Get current color
+                r, g, b = self.config['snake']['colors']['primary_color']
+                
+                # Create color picker with only the wheel flag
+                changed, color = imgui.color_edit3(
+                    "Snake Color",
+                    r, g, b,
+                    flags=imgui.COLOR_EDIT_PICKER_HUE_WHEEL
+                )
+                
+                if changed:
+                    # Store colors as float RGB values between 0 and 1
+                    self.config['snake']['colors']['primary_color'] = tuple(
+                        max(0.0, min(1.0, c)) for c in color
+                    )
+                    
+                # Add gradient intensity slider
+                changed, value = imgui.slider_float(
+                    "Gradient Intensity",
+                    self.config['snake']['colors']['gradient_intensity'],
+                    0.0, 1.0,
+                    format="%.2f"
+                )
+                if changed:
+                    self.config['snake']['colors']['gradient_intensity'] = value
             
             # Use converted display speed for the slider
             changed, display_value = imgui.slider_int(

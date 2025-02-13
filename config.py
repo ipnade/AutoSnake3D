@@ -27,13 +27,15 @@ config = {
         'initial_length': 1,
         'speed': 25,
         'colors': {
-            'grayscale': False,  # Toggle for grayscale mode
-            'grayscale_palette': {
-                'head': (1.0, 1.0, 1.0),  # White
+            'custom_color': False,  # Toggle between custom/default colors
+            'primary_color': (0.0, 1.0, 0.0),  # Default green, will be adjustable
+            'gradient_intensity': 0.5,  # How much the color fades along the snake
+            'default_colors': {
+                'head': (1.0, 0.843, 0.0),  # Original golden yellow
                 'body_pattern': [
-                    (0.8, 0.8, 0.8),  # Light gray
-                    (0.6, 0.6, 0.6),  # Medium gray
-                    (0.4, 0.4, 0.4)   # Dark gray
+                    (0.0, 0.5, 0.0),  # Original dark green
+                    (0.2, 0.8, 0.2),  # Original light green
+                    (0.4, 0.7, 0.0)   # Original yellow-green
                 ]
             },
             'head': (1.0, 0.843, 0.0),  # Original golden yellow

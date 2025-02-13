@@ -32,13 +32,9 @@ def initialize_gl(config):
 
 def handle_keyboard_input(event, config, game_state):
     """Handle keyboard inputs for game controls."""
-    # Cache config paths as constants at module level
-    SNAKE_COLORS = config['snake']['colors']
     CAMERA_CONFIG = config['camera']
     
-    if event.key == pygame.K_g:
-        SNAKE_COLORS['grayscale'] = not SNAKE_COLORS['grayscale']
-    elif event.key == pygame.K_k:
+    if event.key == pygame.K_k:
         game_state.dying = True
     elif event.key == pygame.K_t:
         game_state.snake.grow = True 

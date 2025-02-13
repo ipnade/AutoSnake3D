@@ -1,11 +1,11 @@
 # 3D Auto Snake
 
-A self-playing 3D Snake game built with Pygame and OpenGL. The game runs autonomously, and future updates will include customizable settings for user preferences.
+A self-playing 3D Snake game built with Pygame and OpenGL. The game runs autonomously, and future updates may include more customizable settings and features
 
 ## Features
-- **Self-Playing AI:** Watch the snake navigate and grow on its own.
-- **3D Graphics:** Built using OpenGL for a dynamic visual experience.
-- **Customizable Settings (Planned):** Users will be able to modify speed, colors, and other aspects of the game.
+- **Self-Playing AI:** Watch the snake navigate and grow on its own
+- **3D Graphics:** Built using OpenGL for a dynamic visual experience
+- **Customizable Settings:** Change the speed, color, and particle density (more planned)
 
 ## Requirements
 - Python 3.x
@@ -32,15 +32,16 @@ A self-playing 3D Snake game built with Pygame and OpenGL. The game runs autonom
 ## Usage
 - Launch the script to watch the AI-controlled snake in action!
 
-- Press 'G' to toggle the grayscale colour mode
+- Click and drag the left mouse button to rotate the cube
+
 - Press 'K' to kill the snake
 - Press 'T' to add a tail segment
 - Press 'C' to toggle auto-rotation on/off
 - Press 'P' to toggle particles on/off
 
 ## Planned Features
-- **Customization Options:** Adjustable settings for colors and more
-- **Performance Optimizations:** Improving efficiency for lower resource usage
+- **Customization Options:**
+- **Performance Optimizations:**
 
 ## Contributing
 Contributions are welcome! If you have suggestions or improvements, feel free to open an issue or submit a pull request.
