@@ -152,12 +152,15 @@ class GameState:
                 
             self.last_move_time = current_time
             
-        self.food_bob_time += 0.1
+        # Update food bobbing using config speed
+        self.food_bob_time += self.config['food']['bob_speed']
         
         return True
 
     def get_food_position(self):
-        bob_offset = math.sin(self.food_bob_time) * 0.5
+        bob_speed = self.config['food']['bob_speed']
+        bob_amplitude = self.config['food']['bob_amplitude']
+        bob_offset = math.sin(self.food_bob_time) * bob_amplitude
         return (self.food[0], self.food[1] + bob_offset, self.food[2])
 
     def get_visible_segments(self):

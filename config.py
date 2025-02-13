@@ -54,8 +54,8 @@ config = {
     'food': {
         'color': (1.0, 0.0, 0.0),
         'size': 0.8,
-        'bob_speed': 0.1,
-        'bob_amplitude': 0.5
+        'bob_speed': 0.05,      # Controls how fast the food bobs up and down
+        'bob_amplitude': 0.2    # Controls how far the food moves up and down
     },
     
     # Particle settings
