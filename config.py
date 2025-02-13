@@ -3,7 +3,7 @@ config = {
     'display': {
         'width': 1600,
         'height': 900,
-        'fps': 30,
+        'fps': 144,
         'vsync': True,
     },
     
@@ -13,9 +13,11 @@ config = {
         'near_plane': 0.1,
         'far_plane': 500.0,
         'distance': 100,
+        'auto_rotate': True,  # Add this line
         'rotation_speed': {
             'x': 0.002,
-            'y': 0.001
+            'y': 0.001,
+            'multiplier': 1.0  # Add this line
         },
         'y_amplitude': 0.5  # How much the camera moves up/down
     },

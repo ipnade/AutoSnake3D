@@ -49,35 +49,42 @@ def process_events(ui_system, config, game_state, mouse_state, camera):
     """Process all game events, including mouse drag for manual rotation."""
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            ui_system.shutdown()  # Add shutdown call
+            ui_system.shutdown()
             pygame.quit()
             quit()
-        ui_system.handle_event(event)  # Replace ui_manager.handle_event
+        
+        # Let UI system process the event first
+        ui_system.handle_event(event)
 
         if event.type == pygame.KEYDOWN:
             handle_keyboard_input(event, config, game_state)
 
-        # Handle mouse events for manual rotation:
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            if event.button == 1:  # Left click
-                mouse_state['dragging'] = True
-                mouse_state['last_pos'] = event.pos
-                # Optionally, interrupt the auto-spin instantly:
-                mouse_state['manual_speed'] = 0  
-        elif event.type == pygame.MOUSEBUTTONUP:
-            if event.button == 1:
-                mouse_state['dragging'] = False
-        elif event.type == pygame.MOUSEMOTION and mouse_state['dragging']:
-            current_pos = event.pos
-            last_pos = mouse_state['last_pos']
-            dx = current_pos[0] - last_pos[0]
-            dy = current_pos[1] - last_pos[1]
-            # Update manual rotation speed; you might want to calibrate this factor
-            mouse_state['manual_speed'] = (abs(dx) + abs(dy)) / 2.0  
-            # Call a method on Camera to update its rotation based on mouse delta
-            # You need to add this method in the Camera class.
-            camera.manual_rotate(dx, dy)
-            mouse_state['last_pos'] = current_pos
+        # Check if mouse is in settings window before handling camera rotation
+        settings_bounds = ui_system.get_settings_bounds()
+        mouse_pos = pygame.mouse.get_pos()
+        mouse_in_ui = (
+            settings_bounds['x'] <= mouse_pos[0] <= settings_bounds['x'] + settings_bounds['width'] and
+            settings_bounds['y'] <= mouse_pos[1] <= settings_bounds['y'] + settings_bounds['height']
+        )
+
+        # Only handle camera rotation if mouse is not in UI
+        if not mouse_in_ui:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:  # Left click
+                    mouse_state['dragging'] = True
+                    mouse_state['last_pos'] = event.pos
+                    mouse_state['manual_speed'] = 0
+            elif event.type == pygame.MOUSEBUTTONUP:
+                if event.button == 1:
+                    mouse_state['dragging'] = False
+            elif event.type == pygame.MOUSEMOTION and mouse_state['dragging']:
+                current_pos = event.pos
+                last_pos = mouse_state['last_pos']
+                dx = current_pos[0] - last_pos[0]
+                dy = current_pos[1] - last_pos[1]
+                mouse_state['manual_speed'] = (abs(dx) + abs(dy)) / 2.0
+                camera.manual_rotate(dx, dy)
+                mouse_state['last_pos'] = current_pos
 
 def update_game(game_state, camera, ui_system, current_time):
     """Update game state components."""

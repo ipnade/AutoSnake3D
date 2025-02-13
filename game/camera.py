@@ -52,6 +52,8 @@ class Camera:
         self.rotation_velocity_pitch = delta_pitch
 
     def auto_spin(self):
+        if not self.config['camera']['auto_rotate']:
+            return
         spin_speed_yaw = self.config['camera']['rotation_speed']['x']
         spin_speed_pitch = self.config['camera']['rotation_speed']['y']
         self.yaw = (self.yaw + spin_speed_yaw) % (2 * math.pi)

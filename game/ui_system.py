@@ -6,6 +6,7 @@ class UISystem:
     def __init__(self, config, display):
         self.config = config
         self.display = display
+        self.window_visible = False
         
         # Initialize ImGui
         imgui.create_context()
@@ -46,9 +47,10 @@ class UISystem:
             condition=imgui.ALWAYS  # Force position every frame
         )
         imgui.set_next_window_size(280, 400, condition=imgui.ONCE)  # ONCE allows collapse
-        imgui.set_next_window_collapsed(True, condition=imgui.ONCE)  # Start collapsed
         
-        imgui.begin("Settings", flags=window_flags)
+        # Begin the window and store its visibility state
+        expanded, visible = imgui.begin("Settings", flags=window_flags)
+        self.window_visible = visible and not imgui.is_window_collapsed()
         
         # Particles Settings
         expanded, visible = imgui.collapsing_header("Particles")
@@ -85,6 +87,28 @@ class UISystem:
             if changed:
                 # Convert display value back into internal speed:
                 self.config['snake']['speed'] = 101 - display_value
+
+        # Camera Settings
+        expanded, visible = imgui.collapsing_header("Camera")
+        if expanded:
+            changed, self.config['camera']['auto_rotate'] = imgui.checkbox(
+                "Auto Rotation", 
+                self.config['camera']['auto_rotate']
+            )
+            
+            changed, value = imgui.slider_float(
+                "Rotation Speed",
+                self.config['camera']['rotation_speed']['multiplier'],
+                0.1, 2.0,
+                format="%.1fx"
+            )
+            if changed:
+                self.config['camera']['rotation_speed']['multiplier'] = value
+                # Update actual rotation speeds
+                base_x = 0.002
+                base_y = 0.001
+                self.config['camera']['rotation_speed']['x'] = base_x * value
+                self.config['camera']['rotation_speed']['y'] = base_y * value
             
         imgui.end()
         
@@ -95,3 +119,20 @@ class UISystem:
         
     def shutdown(self):
         self.renderer.shutdown()
+        
+    def get_settings_bounds(self):
+        """Return the current bounds of the settings window."""
+        if not self.window_visible:
+            # Return empty bounds when window is collapsed
+            return {
+                'x': 0,
+                'y': 0,
+                'width': 0,
+                'height': 0
+            }
+        return {
+            'x': self.display[0] - 280,
+            'y': 0,
+            'width': 280,
+            'height': 400
+        }
