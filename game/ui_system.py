@@ -34,7 +34,7 @@ class UISystem:
     def handle_event(self, event):
         self.renderer.process_event(event)
         
-    def update(self):
+    def update(self, game_state):
         imgui.new_frame()
         
         # Create settings window with fixed position
@@ -63,10 +63,14 @@ class UISystem:
         # Particles Settings
         expanded, visible = imgui.collapsing_header("Particles")
         if expanded:
-            changed, self.config['particles']['enabled'] = imgui.checkbox(
+            changed, enabled = imgui.checkbox(
                 "Enabled [P]", 
                 self.config['particles']['enabled']
             )
+            if changed:
+                self.config['particles']['enabled'] = enabled
+                if not enabled:
+                    game_state.particle_system.clear_particles()  # Add particle clearing here
             
             if self.config['particles']['enabled']:
                 changed, value = imgui.slider_int(

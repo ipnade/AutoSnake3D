@@ -61,7 +61,7 @@ def process_events(ui_system, config, game_state, mouse_state, camera):
             if event.key == pygame.K_p:
                 config['particles']['enabled'] = not config['particles']['enabled']
                 if not config['particles']['enabled']:
-                    game_state.particle_system.clear_particles()
+                    game_state.particle_system.clear_particles()  # This line destroys active particles
             handle_keyboard_input(event, config, game_state)
 
         ui_system.handle_event(event)
@@ -90,7 +90,7 @@ def update_game(game_state, camera, ui_system, current_time):
     """Update game state components."""
     game_state.update(current_time)
     camera.update()
-    ui_system.update()
+    ui_system.update(game_state)  # Pass game_state here
 
 def render_scene(renderer, display, camera, game_state):
     """Render the main game scene."""
