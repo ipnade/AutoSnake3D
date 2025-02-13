@@ -12,7 +12,7 @@ class GameState:
     def reset(self):
         self.snake = Snake()
         self.food = self.spawn_food(self.snake.body)
-        self.game_speed = 25
+        self.game_speed = self.config['snake']['speed']  # Use config value instead of hardcoded 25
         self.last_move_time = 0
         self.food_bob_time = 0
         self.particle_system = ParticleSystem()
@@ -87,6 +87,9 @@ class GameState:
         return current_direction
 
     def update(self, current_time):
+        # Update game speed from config in case it changed
+        self.game_speed = self.config['snake']['speed']
+        
         # Update particles regardless of game state
         if self.config['particles']['enabled']:
             self.particle_system.update(1.0/self.config['display']['fps'])

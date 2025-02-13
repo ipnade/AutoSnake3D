@@ -8,7 +8,7 @@ from config import config
 from game.renderer import Renderer
 from game.game_state import GameState
 from game.camera import Camera
-from ui_manager import UIManager
+from game.ui_system import UISystem  # Replace the old UIManager import
 
 def load_texture(image_path):
     texture_surface = pygame.image.load(image_path).convert_alpha()
@@ -45,22 +45,22 @@ def handle_keyboard_input(event, config, game_state):
     elif event.key == pygame.K_t:
         game_state.snake.grow = True
 
-def process_events(ui_manager, config, game_state):
+def process_events(ui_system, config, game_state):
     """Process all game events."""
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
+            ui_system.shutdown()  # Add shutdown call
             pygame.quit()
             quit()
-        elif event.type == pygame.KEYDOWN:
+        ui_system.handle_event(event)  # Replace ui_manager.handle_event
+        if event.type == pygame.KEYDOWN:
             handle_keyboard_input(event, config, game_state)
-        else:
-            ui_manager.handle_event(event, game_state)
 
-def update_game(game_state, camera, ui_manager, current_time):
+def update_game(game_state, camera, ui_system, current_time):
     """Update game state components."""
     game_state.update(current_time)
     camera.update()
-    ui_manager.update()
+    ui_system.update()  # Add UI update
 
 def render_scene(renderer, display, camera, game_state):
     """Render the main game scene."""
@@ -95,15 +95,15 @@ def main():
     # Initialize game components
     game_state = GameState(config)
     renderer = Renderer(config)
-    ui_manager = UIManager(config, display)
+    ui_system = UISystem(config, display)  # Replace UIManager initialization
     camera = Camera(config)
 
     while True:
         clock.tick(config['display']['fps'])
         current_time = pygame.time.get_ticks()
         
-        process_events(ui_manager, config, game_state)
-        update_game(game_state, camera, ui_manager, current_time)
+        process_events(ui_system, config, game_state)
+        update_game(game_state, camera, ui_system, current_time)
         
         # Render frame
         render_scene(renderer, display, camera, game_state)
@@ -111,7 +111,7 @@ def main():
         
         # UI rendering
         glDisable(GL_DEPTH_TEST)
-        ui_manager.draw(gear_texture)
+        ui_system.render()  # Replace ui_manager.draw
         pygame.display.flip()
 
 if __name__ == "__main__":

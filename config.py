@@ -23,7 +23,7 @@ config = {
     # Snake settings
     'snake': {
         'initial_length': 1,
-        'speed': 25,  # Lower = faster
+        'speed': 25,  # This represents speed level 6 (middle speed)
         'colors': {
             'grayscale': False,  # Toggle for grayscale mode
             'grayscale_palette': {
