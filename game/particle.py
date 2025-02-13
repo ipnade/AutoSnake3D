@@ -1,5 +1,3 @@
-import random
-import math
 from OpenGL.GL import *
 
 class Particle:
