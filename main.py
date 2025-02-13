@@ -45,16 +45,39 @@ def handle_keyboard_input(event, config, game_state):
     elif event.key == pygame.K_t:
         game_state.snake.grow = True
 
-def process_events(ui_system, config, game_state):
-    """Process all game events."""
+def process_events(ui_system, config, game_state, mouse_state, camera):
+    """Process all game events, including mouse drag for manual rotation."""
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             ui_system.shutdown()  # Add shutdown call
             pygame.quit()
             quit()
         ui_system.handle_event(event)  # Replace ui_manager.handle_event
+
         if event.type == pygame.KEYDOWN:
             handle_keyboard_input(event, config, game_state)
+
+        # Handle mouse events for manual rotation:
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 1:  # Left click
+                mouse_state['dragging'] = True
+                mouse_state['last_pos'] = event.pos
+                # Optionally, interrupt the auto-spin instantly:
+                mouse_state['manual_speed'] = 0  
+        elif event.type == pygame.MOUSEBUTTONUP:
+            if event.button == 1:
+                mouse_state['dragging'] = False
+        elif event.type == pygame.MOUSEMOTION and mouse_state['dragging']:
+            current_pos = event.pos
+            last_pos = mouse_state['last_pos']
+            dx = current_pos[0] - last_pos[0]
+            dy = current_pos[1] - last_pos[1]
+            # Update manual rotation speed; you might want to calibrate this factor
+            mouse_state['manual_speed'] = (abs(dx) + abs(dy)) / 2.0  
+            # Call a method on Camera to update its rotation based on mouse delta
+            # You need to add this method in the Camera class.
+            camera.manual_rotate(dx, dy)
+            mouse_state['last_pos'] = current_pos
 
 def update_game(game_state, camera, ui_system, current_time):
     """Update game state components."""
@@ -97,13 +120,25 @@ def main():
     renderer = Renderer(config)
     ui_system = UISystem(config, display)  # Replace UIManager initialization
     camera = Camera(config)
+    
+    # Mouse state to track dragging and speed
+    mouse_state = {
+        'dragging': False,
+        'last_pos': (0, 0),
+        'manual_speed': 0  # Track current manual rotation speed
+    }
 
     while True:
         clock.tick(config['display']['fps'])
         current_time = pygame.time.get_ticks()
         
-        process_events(ui_system, config, game_state)
+        process_events(ui_system, config, game_state, mouse_state, camera)
         update_game(game_state, camera, ui_system, current_time)
+        
+        # If not dragging and manual rotation has slowed below a threshold,
+        # let the camera resume auto-spinning.
+        if not mouse_state['dragging'] and mouse_state['manual_speed'] < 0.5:
+            camera.auto_spin()  # Ensure Camera has an auto_spin() method
         
         # Render frame
         render_scene(renderer, display, camera, game_state)
