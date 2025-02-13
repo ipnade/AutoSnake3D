@@ -1,5 +1,5 @@
 import pygame
-from pygame.locals import *
+from pygame.locals import DOUBLEBUF, OPENGL
 from OpenGL.GL import (
     glEnable, glDepthFunc, glTranslatef, GL_DEPTH_TEST, 
     GL_LESS, glDisable
