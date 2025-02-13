@@ -11,6 +11,7 @@ A self-playing 3D Snake game built with Pygame and OpenGL. The game runs autonom
 - Python 3.x
 - Pygame
 - PyOpenGL
+- numpy
 - Other dependencies (to be added as needed)
 
 ## Installation
@@ -29,14 +30,17 @@ A self-playing 3D Snake game built with Pygame and OpenGL. The game runs autonom
    ```
 
 ## Usage
-- Launch the script to watch the AI-controlled snake in action.
-- Press 'G' to toggle between normal and grayscale color modes.
-- Press 'K' to trigger the death animation (debug feature).
-- Press 'T' to add a tail segment (debug feature).
+- Launch the script to watch the AI-controlled snake in action!
+
+- Press 'G' to toggle the grayscale colour mode
+- Press 'K' to kill the snake
+- Press 'T' to add a tail segment
+- Press 'C' to toggle auto-rotation on/off
+- Press 'P' to toggle particles on/off
 
 ## Planned Features
-- **Customization Options:** Adjustable settings for colors, speed, AI behavior, and more.
-- **Performance Optimizations:** Improving efficiency for lower resource usage.
+- **Customization Options:** Adjustable settings for colors and more
+- **Performance Optimizations:** Improving efficiency for lower resource usage
 
 ## Contributing
 Contributions are welcome! If you have suggestions or improvements, feel free to open an issue or submit a pull request.

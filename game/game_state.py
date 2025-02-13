@@ -1,7 +1,7 @@
 import random
 import math
 from snake import Snake
-from game.particle_system import ParticleSystem
+from particle_system import ParticleSystem
 
 class GameState:
     def __init__(self, config):
