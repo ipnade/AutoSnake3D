@@ -1,6 +1,5 @@
 import imgui
 from imgui.integrations.pygame import PygameRenderer
-import colorsys  # Add this import
 
 
 class UISystem:
@@ -9,26 +8,23 @@ class UISystem:
         self.display = display
         self.window_visible = False
         
-        # Initialize ImGui
+        # ImGui setup
         imgui.create_context()
         self.io = imgui.get_io()
         self.io.display_size = display
-        
-        # Initialize ImGui Pygame renderer
         self.renderer = PygameRenderer()
         
-        # Style configuration
+        # UI styling
         style = imgui.get_style()
         style.window_rounding = 6.0
         style.frame_rounding = 4.0
         style.colors[imgui.COLOR_WINDOW_BACKGROUND] = (0.15, 0.15, 0.15, 0.95)
         style.colors[imgui.COLOR_TITLE_BACKGROUND_ACTIVE] = (0.2, 0.2, 0.2, 1.0)
         
-        self.window_width = 340  # Increase from 320 to 340 for better text visibility
+        self.window_width = 360
     
     def get_display_speed(self):
-        """Convert internal speed (100=slow, 1=fast) to a display slider value (1-100)."""
-        # When internal speed is 100, display value is 1; when speed is 1, display value is 100.
+        """Convert speed value for UI display (100=slow, 1=fast to 1-100 scale)"""
         return 101 - self.config['snake']['speed']
         
     def handle_event(self, event):
@@ -37,30 +33,31 @@ class UISystem:
     def update(self, game_state):
         imgui.new_frame()
         
-        # Create settings window with fixed position
+        # Settings window configuration
         window_flags = (
             imgui.WINDOW_NO_MOVE |
-            imgui.WINDOW_ALWAYS_AUTO_RESIZE  # Let ImGui automatically adjust the window size
+            imgui.WINDOW_ALWAYS_AUTO_RESIZE
         )
         
-        # Position at top right
+        # Position window at top right
         imgui.set_next_window_position(
-            self.display[0] - self.window_width,  # Use window_width instead of 280
-            0,                      # 0px from top
-            condition=imgui.ALWAYS  # Force position every frame
+            self.display[0] - self.window_width,
+            0,
+            condition=imgui.ALWAYS
         )
-        imgui.set_next_window_collapsed(True, condition=imgui.ONCE)  # Collapse window by default
-        imgui.set_next_window_size(self.window_width, 400, condition=imgui.ONCE)  # ONCE allows collapse
+        
+        # Window setup
+        imgui.set_next_window_collapsed(True, condition=imgui.ONCE)
+        imgui.set_next_window_size(self.window_width, 400, condition=imgui.ONCE)
         imgui.set_next_window_size_constraints(
             (self.window_width, 0),
             (self.window_width, 10000)
         )
         
-        # Begin the window and store its visibility state
         expanded, visible = imgui.begin("Settings", flags=window_flags)
         self.window_visible = visible and not imgui.is_window_collapsed()
         
-        # Particles Settings
+        # Particle settings section
         expanded, visible = imgui.collapsing_header("Particles")
         if expanded:
             changed, enabled = imgui.checkbox(
@@ -70,7 +67,7 @@ class UISystem:
             if changed:
                 self.config['particles']['enabled'] = enabled
                 if not enabled:
-                    game_state.particle_system.clear_particles()  # Add particle clearing here
+                    game_state.particle_system.clear_particles()
             
             if self.config['particles']['enabled']:
                 changed, value = imgui.slider_int(
@@ -82,7 +79,7 @@ class UISystem:
                 if changed:
                     self.config['particles']['count'] = value
                     
-        # Snake Settings
+        # Snake settings section
         expanded, visible = imgui.collapsing_header("Snake")
         if expanded:
             changed, self.config['snake']['colors']['custom_color'] = imgui.checkbox(
@@ -91,10 +88,7 @@ class UISystem:
             )
             
             if self.config['snake']['colors']['custom_color']:
-                # Get current color
                 r, g, b = self.config['snake']['colors']['primary_color']
-                
-                # Create color picker with only the wheel flag
                 changed, color = imgui.color_edit3(
                     "Snake Color",
                     r, g, b,
@@ -102,12 +96,10 @@ class UISystem:
                 )
                 
                 if changed:
-                    # Store colors as float RGB values between 0 and 1
                     self.config['snake']['colors']['primary_color'] = tuple(
                         max(0.0, min(1.0, c)) for c in color
                     )
                     
-                # Add gradient intensity slider
                 changed, value = imgui.slider_float(
                     "Gradient Intensity",
                     self.config['snake']['colors']['gradient_intensity'],
@@ -117,17 +109,15 @@ class UISystem:
                 if changed:
                     self.config['snake']['colors']['gradient_intensity'] = value
             
-            # Use converted display speed for the slider
             changed, display_value = imgui.slider_int(
                 "Snake Speed",
                 self.get_display_speed(),
-                1, 100  # 1 = slowest, 100 = fastest
+                1, 100
             )
             if changed:
-                # Convert display value back into internal speed:
                 self.config['snake']['speed'] = 101 - display_value
 
-        # Camera Settings
+        # Camera settings section
         expanded, visible = imgui.collapsing_header("Camera")
         if expanded:
             changed, self.config['camera']['auto_rotate'] = imgui.checkbox(
@@ -143,16 +133,13 @@ class UISystem:
             )
             if changed:
                 self.config['camera']['rotation_speed']['multiplier'] = value
-                # Update actual rotation speeds
-                base_x = 0.002
-                base_y = 0.001
+                base_x, base_y = 0.002, 0.001
                 self.config['camera']['rotation_speed']['x'] = base_x * value
                 self.config['camera']['rotation_speed']['y'] = base_y * value
             
         imgui.end()
         
     def render(self):
-        # Render ImGui
         imgui.render()
         self.renderer.render(imgui.get_draw_data())
         
@@ -160,15 +147,13 @@ class UISystem:
         self.renderer.shutdown()
         
     def get_settings_bounds(self):
-        """Return the current bounds of the settings window."""
+        """Return the current bounds of the settings window"""
         if not self.window_visible:
-            # Return a small header area when the window is collapsed.
-            # Adjust the header height as needed (here we use 20 pixels).
             return {
                 'x': self.display[0] - self.window_width,
                 'y': 0,
                 'width': self.window_width,
-                'height': 20
+                'height': 20  # Collapsed header height
             }
         return {
             'x': self.display[0] - self.window_width,

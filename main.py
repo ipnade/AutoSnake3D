@@ -9,20 +9,21 @@ from game.camera import Camera
 from game.ui_system import UISystem
 
 def initialize_gl(config):
+    """Initialize OpenGL and Pygame display settings"""
     pygame.init()
     pygame.display.set_caption("AutoSnake3D")
-    icon = pygame.image.load("textures/snake.png")
-    pygame.display.set_icon(icon)
+    pygame.display.set_icon(pygame.image.load("textures/snake.png"))
     
-    # Cache display dimensions to avoid dict lookups
     width = config['display']['width']
     height = config['display']['height'] 
     display = (width, height)
     
     pygame.display.set_mode(display, DOUBLEBUF | OPENGL)
+    
+    # OpenGL settings
     glEnable(GL_DEPTH_TEST)
     glDepthFunc(GL_LESS)
-    gluPerspective(45, (display[0]/display[1]), 0.1, 500.0)
+    gluPerspective(45, (width/height), 0.1, 500.0)
     glTranslatef(0.0, 0.0, -100)
     
     if config['display'].get('vsync', True):
@@ -31,60 +32,102 @@ def initialize_gl(config):
     return display
 
 def handle_keyboard_input(event, config, game_state):
-    """Handle keyboard inputs for game controls."""
-    CAMERA_CONFIG = config['camera']
+    """Process keyboard controls"""
+    key_actions = {
+        pygame.K_k: lambda: setattr(game_state, 'dying', True),
+        pygame.K_t: lambda: setattr(game_state.snake, 'grow', True),
+        pygame.K_c: lambda: toggle_camera_rotation(config),
+        pygame.K_p: lambda: toggle_particles(config, game_state)
+    }
     
-    if event.key == pygame.K_k:
-        game_state.dying = True
-    elif event.key == pygame.K_t:
-        game_state.snake.grow = True 
-    elif event.key == pygame.K_c:
-        CAMERA_CONFIG['auto_rotate'] = not CAMERA_CONFIG['auto_rotate']
+    if event.key in key_actions:
+        key_actions[event.key]()
+
+def toggle_camera_rotation(config):
+    """Toggle camera auto-rotation"""
+    config['camera']['auto_rotate'] = not config['camera']['auto_rotate']
+
+def toggle_particles(config, game_state):
+    """Toggle particle system and clear existing particles"""
+    config['particles']['enabled'] = not config['particles']['enabled']
+    if not config['particles']['enabled']:
+        game_state.particle_system.clear_particles()
+
+def handle_mouse_input(event, mouse_state, camera, mouse_in_ui):
+    """Process mouse input for camera control"""
+    if mouse_in_ui:
+        return
+        
+    if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+        mouse_state.update({
+            'dragging': True,
+            'last_pos': event.pos,
+            'manual_speed': 0
+        })
+        camera.disable_auto_spin = True
+        
+    elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+        mouse_state['dragging'] = False
+        camera.disable_auto_spin = False
+        
+    elif event.type == pygame.MOUSEMOTION and mouse_state['dragging']:
+        current_pos = event.pos
+        last_pos = mouse_state['last_pos']
+        dx = current_pos[0] - last_pos[0]
+        dy = current_pos[1] - last_pos[1]
+        
+        mouse_state.update({
+            'manual_speed': (abs(dx) + abs(dy)) / 2.0,
+            'last_pos': current_pos
+        })
+        camera.manual_rotate(dx, dy)
 
 def process_events(ui_system, config, game_state, mouse_state, camera):
+    """Process all game events"""
     bounds = ui_system.get_settings_bounds()
     mouse_pos = pygame.mouse.get_pos()
     
-    # More efficient bounds check
-    mouse_in_ui = all([
-        bounds['x'] <= mouse_pos[0] <= bounds['x'] + bounds['width'],
-        bounds['y'] <= mouse_pos[1] <= bounds['y'] + bounds['height']
-    ])
+    mouse_in_ui = (bounds['x'] <= mouse_pos[0] <= bounds['x'] + bounds['width'] and
+                  bounds['y'] <= mouse_pos[1] <= bounds['y'] + bounds['height'])
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            ui_system.shutdown()
-            pygame.quit()
-            quit()
-        
+            return False
+            
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_p:
-                config['particles']['enabled'] = not config['particles']['enabled']
-                if not config['particles']['enabled']:
-                    game_state.particle_system.clear_particles()  # This line destroys active particles
             handle_keyboard_input(event, config, game_state)
-
+            
         ui_system.handle_event(event)
+        handle_mouse_input(event, mouse_state, camera, mouse_in_ui)
+    
+    return True
 
-        if not mouse_in_ui:
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 1:
-                    mouse_state['dragging'] = True
-                    mouse_state['last_pos'] = event.pos
-                    mouse_state['manual_speed'] = 0
-                    camera.disable_auto_spin = True
-            elif event.type == pygame.MOUSEBUTTONUP:
-                if event.button == 1:
-                    mouse_state['dragging'] = False
-                    camera.disable_auto_spin = False
-            elif event.type == pygame.MOUSEMOTION and mouse_state['dragging']:
-                current_pos = event.pos
-                last_pos = mouse_state['last_pos']
-                dx = current_pos[0] - last_pos[0]
-                dy = current_pos[1] - last_pos[1]
-                mouse_state['manual_speed'] = (abs(dx) + abs(dy)) / 2.0
-                camera.manual_rotate(dx, dy)
-                mouse_state['last_pos'] = current_pos
+def game_loop(display, game_state, renderer, ui_system, camera, mouse_state, clock):
+    """Main game loop"""
+    while True:
+        current_time = pygame.time.get_ticks()
+        
+        if not process_events(ui_system, config, game_state, mouse_state, camera):
+            break
+            
+        # Update game state
+        game_state.update(current_time)
+        camera.update()
+        ui_system.update(game_state)
+        
+        # Update camera auto-spin
+        if not mouse_state['dragging'] and mouse_state['manual_speed'] < 0.5:
+            camera.auto_spin()
+        
+        # Render frame
+        render_scene(renderer, display, camera, game_state)
+        handle_particles(game_state)
+        
+        glDisable(GL_DEPTH_TEST)
+        ui_system.render()
+        pygame.display.flip()
+        
+        clock.tick(config['display']['fps'])
 
 def update_game(game_state, camera, ui_system, current_time):
     """Update game state components."""
@@ -120,17 +163,16 @@ def handle_particles(game_state):
         game_state.food_collected = False
 
 def main():
+    """Initialize and run the game"""
     display = initialize_gl(config)
     clock = pygame.time.Clock()
-    pygame.display.gl_set_attribute(pygame.GL_SWAP_CONTROL, int(config['display']['vsync']))
-
-    # Initialize game components
+    
+    # Initialize components
     game_state = GameState(config)
     renderer = Renderer(config)
     ui_system = UISystem(config, display)
     camera = Camera(config)
     
-    # Mouse state to track dragging and speed
     mouse_state = {
         'dragging': False,
         'last_pos': (0, 0),
@@ -138,27 +180,7 @@ def main():
     }
 
     try:
-        while True:
-            current_time = pygame.time.get_ticks()
-            
-            # Bundle related updates
-            process_events(ui_system, config, game_state, mouse_state, camera)
-            update_game(game_state, camera, ui_system, current_time)
-            
-            # Only check auto_spin when needed
-            if not any([mouse_state['dragging'], mouse_state['manual_speed'] >= 0.5]):
-                camera.auto_spin()
-            
-            # Batch render calls
-            render_scene(renderer, display, camera, game_state)
-            handle_particles(game_state)
-            
-            # Minimize state changes
-            glDisable(GL_DEPTH_TEST)
-            ui_system.render()
-            pygame.display.flip()
-            
-            clock.tick(config['display']['fps'])
+        game_loop(display, game_state, renderer, ui_system, camera, mouse_state, clock)
     finally:
         ui_system.shutdown()
         pygame.quit()

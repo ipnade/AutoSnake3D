@@ -11,7 +11,7 @@ class GameState:
     def reset(self):
         self.snake = Snake()
         self.food = self.spawn_food(self.snake.body)
-        self.game_speed = self.config['snake']['speed']  # Use config value instead of hardcoded 25
+        self.game_speed = self.config['snake']['speed']
         self.last_move_time = 0
         self.food_bob_time = 0
         self.particle_system = ParticleSystem()
@@ -20,8 +20,7 @@ class GameState:
         self.last_death_effect = 0
         self.death_complete = False
         self.death_complete_time = 0
-        self.death_speed = 250  # Start slow (500ms between explosions)
-        # Add new attributes
+        self.death_speed = 250
         self.food_collected = False
         self.last_food_pos = None
         
@@ -170,6 +169,6 @@ def draw(self):
             self.particle_system.emit_particles(
                 position=self.last_food_pos, 
                 color=[1.0, 0.0, 0.0],
-                count=self.config['particles']['count']  # Pass the count from config
+                count=self.config['particles']['count']
             )
             self.food_collected = False
