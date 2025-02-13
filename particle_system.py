@@ -1,4 +1,3 @@
-from particle import Particle
 import random
 import math
 from OpenGL.GL import *
@@ -6,11 +5,14 @@ from OpenGL.GL import *
 class ParticleSystem:
     def __init__(self):
         self.particles = []
-        glPointSize(5.0)  # Larger point size for better visibility
+        glPointSize(5.0)
 
-    def emit_particles(self, position, count=20, color=(1.0, 0.5, 0.0)):
-        for _ in range(count):
-            # Random velocity in sphere
+    def emit_particles(self, position, count=None, color=(1.0, 0.5, 0.0)):
+        """Emit multiple particles from a position with random velocities"""
+        particle_count = count if count is not None else 30
+        
+        for _ in range(particle_count):
+            # Calculate random velocity in sphere
             angle1 = random.uniform(0, 2 * math.pi)
             angle2 = random.uniform(0, 2 * math.pi)
             speed = random.uniform(5, 15)
@@ -21,16 +23,21 @@ class ParticleSystem:
                 speed * math.cos(angle1)
             ]
             
-            # Random variation in color
-            color_variation = 0.2
+            # Apply color variation
             varied_color = [
-                min(1.0, c + random.uniform(-color_variation, color_variation))
+                min(1.0, c + random.uniform(-0.2, 0.2))
                 for c in color
             ]
             
-            self.emit_particle(position, velocity, varied_color, random.uniform(0.5, 2.0))
+            self.emit_particle(
+                position=position, 
+                velocity=velocity, 
+                color=varied_color, 
+                lifetime=random.uniform(0.5, 2.0)
+            )
 
     def emit_particle(self, position, velocity, color, lifetime):
+        """Create a single particle with specified properties"""
         self.particles.append({
             'position': list(position),
             'velocity': velocity,
@@ -40,39 +47,32 @@ class ParticleSystem:
         })
 
     def update(self, dt):
+        """Update particle physics and remove dead particles"""
         for particle in self.particles:
-            # Update position
-            particle['position'][0] += particle['velocity'][0] * dt
-            particle['position'][1] += particle['velocity'][1] * dt
-            particle['position'][2] += particle['velocity'][2] * dt
+            # Update position based on velocity
+            for i in range(3):
+                particle['position'][i] += particle['velocity'][i] * dt
             
-            # Add gravity
-            particle['velocity'][1] -= 25.0 * dt  # Stronger gravity effect
-            
-            # Update lifetime
+            # Apply gravity
+            particle['velocity'][1] -= 25.0 * dt
             particle['lifetime'] -= dt
         
-        # Remove dead particles
         self.particles = [p for p in self.particles if p['lifetime'] > 0]
 
     def draw(self):
+        """Render all active particles"""
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
         
         glBegin(GL_POINTS)
         for particle in self.particles:
             alpha = particle['lifetime'] / particle['max_lifetime']
-            glColor4f(
-                particle['color'][0],
-                particle['color'][1],
-                particle['color'][2],
-                alpha
-            )
-            glVertex3f(
-                particle['position'][0],
-                particle['position'][1],
-                particle['position'][2]
-            )
+            glColor4f(*particle['color'], alpha)
+            glVertex3f(*particle['position'])
         glEnd()
         
         glDisable(GL_BLEND)
+
+    def clear_particles(self):
+        """Remove all active particles"""
+        self.particles.clear()

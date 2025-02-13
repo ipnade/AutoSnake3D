@@ -11,7 +11,7 @@ class GameState:
     def reset(self):
         self.snake = Snake()
         self.food = self.spawn_food(self.snake.body)
-        self.game_speed = 25
+        self.game_speed = self.config['snake']['speed']
         self.last_move_time = 0
         self.food_bob_time = 0
         self.particle_system = ParticleSystem()
@@ -20,7 +20,9 @@ class GameState:
         self.last_death_effect = 0
         self.death_complete = False
         self.death_complete_time = 0
-        self.death_speed = 500  # Start slow (500ms between explosions)
+        self.death_speed = 250
+        self.food_collected = False
+        self.last_food_pos = None
         
     def spawn_food(self, snake_body):
         while True:
@@ -83,6 +85,9 @@ class GameState:
         return current_direction
 
     def update(self, current_time):
+        # Update game speed from config in case it changed
+        self.game_speed = self.config['snake']['speed']
+        
         # Update particles regardless of game state
         if self.config['particles']['enabled']:
             self.particle_system.update(1.0/self.config['display']['fps'])
@@ -90,31 +95,26 @@ class GameState:
         if self.dying:
             if current_time - self.last_death_effect >= self.death_speed:
                 if self.death_animation_segment < len(self.snake.body):
-                    # Get segment from tail (last index - current animation step)
-                    segment_index = len(self.snake.body) - 1 - self.death_animation_segment
-                    segment = self.snake.body[segment_index]
-                    
-                    # Calculate color for current segment
-                    if self.config['snake']['colors']['grayscale']:
-                        color = [1.0 - (segment_index/len(self.snake.body))] * 3
-                    else:
+                    if self.config['particles']['enabled']:
+                        segment_index = len(self.snake.body) - 1 - self.death_animation_segment
+                        segment = self.snake.body[segment_index]
+                        
                         color = [0.0, 1.0 - (segment_index/(2*len(self.snake.body))), 0.0]
+                        
+                        for _ in range(self.config['particles']['count']):
+                            velocity = [
+                                random.uniform(-15, 15),
+                                random.uniform(5, 20),
+                                random.uniform(-15, 15)
+                            ]
+                            self.particle_system.emit_particle(
+                                position=segment,
+                                velocity=velocity, 
+                                color=color,
+                                lifetime=random.uniform(0.5, 1.5)
+                            )
                     
-                    # Emit more particles with higher velocity
-                    for _ in range(30):
-                        velocity = [
-                            random.uniform(-15, 15),
-                            random.uniform(5, 20),  # More upward velocity
-                            random.uniform(-15, 15)
-                        ]
-                        self.particle_system.emit_particle(
-                            position=segment,
-                            velocity=velocity,
-                            color=color,
-                            lifetime=random.uniform(0.5, 1.5)
-                        )
-                    
-                    # Accelerate the death animation
+                    # Progress death animation regardless of particles
                     self.death_speed = max(50, 500 - (self.death_animation_segment * 25))
                     self.death_animation_segment += 1
                     self.last_death_effect = current_time
@@ -132,12 +132,11 @@ class GameState:
             self.snake.move(next_move)
             
             if self.snake.body[0] == self.food:
+                # Store food position before spawning new food
+                if self.config['particles']['enabled']:
+                    self.last_food_pos = self.food
+                    self.food_collected = True
                 self.snake.grow = True
-                self.particle_system.emit_particles(
-                    position=self.food,
-                    count=30,
-                    color=(1.0, 0.0, 0.0)
-                )
                 self.food = self.spawn_food(self.snake.body)
             
             if self.snake.check_collision():
@@ -146,12 +145,15 @@ class GameState:
                 
             self.last_move_time = current_time
             
-        self.food_bob_time += 0.1
+        # Update food bobbing using config speed
+        self.food_bob_time += self.config['food']['bob_speed']
         
         return True
 
     def get_food_position(self):
-        bob_offset = math.sin(self.food_bob_time) * 0.5
+        bob_speed = self.config['food']['bob_speed']
+        bob_amplitude = self.config['food']['bob_amplitude']
+        bob_offset = math.sin(self.food_bob_time) * bob_amplitude
         return (self.food[0], self.food[1] + bob_offset, self.food[2])
 
     def get_visible_segments(self):
@@ -159,3 +161,14 @@ class GameState:
             return self.snake.body
         # Return all segments except the ones that have been destroyed
         return self.snake.body[:(len(self.snake.body) - self.death_animation_segment)]
+
+def draw(self):
+    if self.config['particles']['enabled']:
+        self.particle_system.draw()
+        if self.food_collected:
+            self.particle_system.emit_particles(
+                position=self.last_food_pos, 
+                color=[1.0, 0.0, 0.0],
+                count=self.config['particles']['count']
+            )
+            self.food_collected = False
