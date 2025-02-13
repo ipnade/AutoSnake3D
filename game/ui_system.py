@@ -22,6 +22,8 @@ class UISystem:
         style.frame_rounding = 4.0
         style.colors[imgui.COLOR_WINDOW_BACKGROUND] = (0.15, 0.15, 0.15, 0.95)
         style.colors[imgui.COLOR_TITLE_BACKGROUND_ACTIVE] = (0.2, 0.2, 0.2, 1.0)
+        
+        self.window_width = 340  # Increase from 320 to 340 for better text visibility
     
     def get_display_speed(self):
         """Convert internal speed (100=slow, 1=fast) to a display slider value (1-100)."""
@@ -42,11 +44,11 @@ class UISystem:
         
         # Position at top right
         imgui.set_next_window_position(
-            self.display[0] - 280,  # 280px width
+            self.display[0] - self.window_width,  # Use window_width instead of 280
             0,                      # 0px from top
             condition=imgui.ALWAYS  # Force position every frame
         )
-        imgui.set_next_window_size(280, 400, condition=imgui.ONCE)  # ONCE allows collapse
+        imgui.set_next_window_size(self.window_width, 400, condition=imgui.ONCE)  # ONCE allows collapse
         
         # Begin the window and store its visibility state
         expanded, visible = imgui.begin("Settings", flags=window_flags)
@@ -131,8 +133,8 @@ class UISystem:
                 'height': 0
             }
         return {
-            'x': self.display[0] - 280,
+            'x': self.display[0] - self.window_width,  # Use window_width 
             'y': 0,
-            'width': 280,
+            'width': self.window_width,  # Use window_width
             'height': 400
         }
