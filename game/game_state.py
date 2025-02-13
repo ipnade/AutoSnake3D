@@ -97,10 +97,20 @@ class GameState:
                 if self.death_animation_segment < len(self.snake.body):
                     if self.config['particles']['enabled']:
                         segment_index = len(self.snake.body) - 1 - self.death_animation_segment
-                        segment = self.snake.body[segment_index]
                         
-                        color = [0.0, 1.0 - (segment_index/(2*len(self.snake.body))), 0.0]
-                        
+                        # Get the same color as the snake segment
+                        if self.config['snake']['colors']['custom_color']:
+                            r, g, b = self.config['snake']['colors']['primary_color']
+                            intensity = self.config['snake']['colors']['gradient_intensity']
+                            fade = 1.0 - (segment_index/len(self.snake.body)) * intensity
+                            color = [max(0.0, min(1.0, c * fade)) for c in (r, g, b)]
+                        else:
+                            if segment_index == 0:
+                                color = self.config['snake']['colors']['default_colors']['head']
+                            else:
+                                pattern = self.config['snake']['colors']['default_colors']['body_pattern']
+                                color = pattern[segment_index % len(pattern)]
+
                         for _ in range(self.config['particles']['count']):
                             velocity = [
                                 random.uniform(-15, 15),
@@ -108,8 +118,8 @@ class GameState:
                                 random.uniform(-15, 15)
                             ]
                             self.particle_system.emit_particle(
-                                position=segment,
-                                velocity=velocity, 
+                                position=self.snake.body[segment_index],
+                                velocity=velocity,
                                 color=color,
                                 lifetime=random.uniform(0.5, 1.5)
                             )
