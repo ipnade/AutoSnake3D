@@ -150,7 +150,7 @@ def update_game(game_state, camera, ui_system, current_time):
     """Update game state components."""
     game_state.update(current_time)
     camera.update()
-    ui_system.update(game_state)  # Pass game_state here
+    ui_system.update(game_state)
 
 def render_scene(renderer, display, camera, game_state):
     """Render the main game scene."""
