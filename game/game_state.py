@@ -1,6 +1,5 @@
 import random
 import math
-import config
 from snake import Snake
 from particle_system import ParticleSystem
 
@@ -21,7 +20,7 @@ class GameState:
         self.last_death_effect = 0
         self.death_complete = False
         self.death_complete_time = 0
-        self.death_speed = 500  # Start slow (500ms between explosions)
+        self.death_speed = 250  # Start slow (500ms between explosions)
         # Add new attributes
         self.food_collected = False
         self.last_food_pos = None
