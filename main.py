@@ -24,6 +24,10 @@ def load_texture(image_path):
 
 def initialize_gl(config):
     pygame.init()
+    pygame.display.set_caption("Auto Snake 3D")
+    icon = pygame.image.load("textures/snake.png")
+    pygame.display.set_icon(icon)
+    
     display = (config['display']['width'], config['display']['height'])
     pygame.display.set_mode(display, DOUBLEBUF | OPENGL)
     glEnable(GL_DEPTH_TEST)
