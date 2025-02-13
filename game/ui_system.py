@@ -130,16 +130,17 @@ class UISystem:
     def get_settings_bounds(self):
         """Return the current bounds of the settings window."""
         if not self.window_visible:
-            # Return empty bounds when window is collapsed
+            # Return a small header area when the window is collapsed.
+            # Adjust the header height as needed (here we use 20 pixels).
             return {
-                'x': 0,
+                'x': self.display[0] - self.window_width,
                 'y': 0,
-                'width': 0,
-                'height': 0
+                'width': self.window_width,
+                'height': 20
             }
         return {
-            'x': self.display[0] - self.window_width,  # Use window_width 
+            'x': self.display[0] - self.window_width,
             'y': 0,
-            'width': self.window_width,  # Use window_width
+            'width': self.window_width,
             'height': 400
         }
