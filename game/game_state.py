@@ -96,19 +96,13 @@ class GameState:
         if self.dying:
             if current_time - self.last_death_effect >= self.death_speed:
                 if self.death_animation_segment < len(self.snake.body):
-                    # Only emit particles if enabled
                     if self.config['particles']['enabled']:
                         segment_index = len(self.snake.body) - 1 - self.death_animation_segment
                         segment = self.snake.body[segment_index]
                         
-                        # Calculate color for current segment
-                        if self.config['snake']['colors']['grayscale']:
-                            color = [1.0 - (segment_index/len(self.snake.body))] * 3
-                        else:
-                            color = [0.0, 1.0 - (segment_index/(2*len(self.snake.body))), 0.0]
+                        color = [0.0, 1.0 - (segment_index/(2*len(self.snake.body))), 0.0]
                         
-                        # Use config particle count instead of hardcoded 30
-                        for _ in range(self.config['particles']['count']):  # Changed from 30 to config value
+                        for _ in range(self.config['particles']['count']):
                             velocity = [
                                 random.uniform(-15, 15),
                                 random.uniform(5, 20),
