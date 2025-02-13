@@ -89,6 +89,27 @@ class Renderer:
         
     def calculate_snake_color(self, segment_index, total_segments):
         """Calculate snake segment color based on configuration"""
+        if self.config['snake']['colors']['gamer_mode']:
+            # Use time to cycle through hue values
+            import time
+            hue = (time.time() * 0.5) % 1.0
+            # Convert HSV to RGB (simplified version)
+            h = hue * 6.0
+            c = 1.0
+            x = c * (1 - abs(h % 2 - 1))
+            
+            if h < 1: rgb = (c, x, 0)
+            elif h < 2: rgb = (x, c, 0)
+            elif h < 3: rgb = (0, c, x)
+            elif h < 4: rgb = (0, x, c)
+            elif h < 5: rgb = (x, 0, c)
+            else: rgb = (c, 0, x)
+            
+            intensity = self.config['snake']['colors']['gradient_intensity']
+            fade = 1.0 - (segment_index/total_segments) * intensity
+            return [max(0.0, min(1.0, c * fade)) for c in rgb]
+        
+        # Original color logic
         if self.config['snake']['colors']['custom_color']:
             r, g, b = self.config['snake']['colors']['primary_color']
             intensity = self.config['snake']['colors']['gradient_intensity']

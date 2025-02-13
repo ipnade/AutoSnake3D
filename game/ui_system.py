@@ -82,32 +82,39 @@ class UISystem:
         # Snake settings section
         expanded, visible = imgui.collapsing_header("Snake")
         if expanded:
-            changed, self.config['snake']['colors']['custom_color'] = imgui.checkbox(
-                "Custom Color", 
-                self.config['snake']['colors']['custom_color']
+            changed, self.config['snake']['colors']['gamer_mode'] = imgui.checkbox(
+                "Gamer Mode", 
+                self.config['snake']['colors']['gamer_mode']
             )
             
-            if self.config['snake']['colors']['custom_color']:
-                r, g, b = self.config['snake']['colors']['primary_color']
-                changed, color = imgui.color_edit3(
-                    "Snake Color",
-                    r, g, b,
-                    flags=imgui.COLOR_EDIT_PICKER_HUE_WHEEL
+            # Only show custom color options if gamer mode is off
+            if not self.config['snake']['colors']['gamer_mode']:
+                changed, self.config['snake']['colors']['custom_color'] = imgui.checkbox(
+                    "Custom Color", 
+                    self.config['snake']['colors']['custom_color']
                 )
                 
-                if changed:
-                    self.config['snake']['colors']['primary_color'] = tuple(
-                        max(0.0, min(1.0, c)) for c in color
+                if self.config['snake']['colors']['custom_color']:
+                    r, g, b = self.config['snake']['colors']['primary_color']
+                    changed, color = imgui.color_edit3(
+                        "Snake Color",
+                        r, g, b,
+                        flags=imgui.COLOR_EDIT_PICKER_HUE_WHEEL
                     )
                     
-                changed, value = imgui.slider_float(
-                    "Gradient Intensity",
-                    self.config['snake']['colors']['gradient_intensity'],
-                    0.0, 1.0,
-                    format="%.2f"
-                )
-                if changed:
-                    self.config['snake']['colors']['gradient_intensity'] = value
+                    if changed:
+                        self.config['snake']['colors']['primary_color'] = tuple(
+                            max(0.0, min(1.0, c)) for c in color
+                        )
+                        
+                    changed, value = imgui.slider_float(
+                        "Gradient Intensity",
+                        self.config['snake']['colors']['gradient_intensity'],
+                        0.0, 1.0,
+                        format="%.2f"
+                    )
+                    if changed:
+                        self.config['snake']['colors']['gradient_intensity'] = value
             
             changed, display_value = imgui.slider_int(
                 "Snake Speed",

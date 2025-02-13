@@ -30,6 +30,7 @@ config = {
             'custom_color': False,
             'primary_color': (0.0, 1.0, 0.0),
             'gradient_intensity': 0.5,
+            'gamer_mode': False,
             'default_colors': {
                 'head': (1.0, 0.843, 0.0),
                 'body_pattern': [
