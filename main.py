@@ -8,23 +8,11 @@ from config import config
 from game.renderer import Renderer
 from game.game_state import GameState
 from game.camera import Camera
-from game.ui_system import UISystem  # Replace the old UIManager import
-
-def load_texture(image_path):
-    texture_surface = pygame.image.load(image_path).convert_alpha()
-    texture_data = pygame.image.tostring(texture_surface, "RGBA", True)
-    width, height = texture_surface.get_width(), texture_surface.get_height()
-    texture_id = glGenTextures(1)
-    glBindTexture(GL_TEXTURE_2D, texture_id)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, texture_data)
-    glBindTexture(GL_TEXTURE_2D, 0)
-    return texture_id, width, height
+from game.ui_system import UISystem
 
 def initialize_gl(config):
     pygame.init()
-    pygame.display.set_caption("Auto Snake 3D")
+    pygame.display.set_caption("AutoSnake3D")
     icon = pygame.image.load("textures/snake.png")
     pygame.display.set_icon(icon)
     
@@ -76,11 +64,11 @@ def process_events(ui_system, config, game_state, mouse_state, camera):
                     mouse_state['dragging'] = True
                     mouse_state['last_pos'] = event.pos
                     mouse_state['manual_speed'] = 0
-                    camera.disable_auto_spin = True  # Disable auto-spin
+                    camera.disable_auto_spin = True
             elif event.type == pygame.MOUSEBUTTONUP:
                 if event.button == 1:
                     mouse_state['dragging'] = False
-                    camera.disable_auto_spin = False  # Re-enable auto-spin
+                    camera.disable_auto_spin = False
             elif event.type == pygame.MOUSEMOTION and mouse_state['dragging']:
                 current_pos = event.pos
                 last_pos = mouse_state['last_pos']
@@ -94,7 +82,7 @@ def update_game(game_state, camera, ui_system, current_time):
     """Update game state components."""
     game_state.update(current_time)
     camera.update()
-    ui_system.update()  # Add UI update
+    ui_system.update()
 
 def render_scene(renderer, display, camera, game_state):
     """Render the main game scene."""
@@ -121,22 +109,20 @@ def handle_particles(game_state):
 
 def main():
     display = initialize_gl(config)
-    gear_texture, gear_w, gear_h = load_texture("textures/gear.png")
-    
     clock = pygame.time.Clock()
     pygame.display.gl_set_attribute(pygame.GL_SWAP_CONTROL, int(config['display']['vsync']))
 
     # Initialize game components
     game_state = GameState(config)
     renderer = Renderer(config)
-    ui_system = UISystem(config, display)  # Replace UIManager initialization
+    ui_system = UISystem(config, display)
     camera = Camera(config)
     
     # Mouse state to track dragging and speed
     mouse_state = {
         'dragging': False,
         'last_pos': (0, 0),
-        'manual_speed': 0  # Track current manual rotation speed
+        'manual_speed': 0
     }
 
     while True:
@@ -146,10 +132,8 @@ def main():
         process_events(ui_system, config, game_state, mouse_state, camera)
         update_game(game_state, camera, ui_system, current_time)
         
-        # If not dragging and manual rotation has slowed below a threshold,
-        # let the camera resume auto-spinning.
         if not mouse_state['dragging'] and mouse_state['manual_speed'] < 0.5:
-            camera.auto_spin()  # Ensure Camera has an auto_spin() method
+            camera.auto_spin()
         
         # Render frame
         render_scene(renderer, display, camera, game_state)
@@ -157,7 +141,7 @@ def main():
         
         # UI rendering
         glDisable(GL_DEPTH_TEST)
-        ui_system.render()  # Replace ui_manager.draw
+        ui_system.render()
         pygame.display.flip()
 
 if __name__ == "__main__":
