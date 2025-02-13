@@ -32,11 +32,22 @@ class UISystem:
     def update(self):
         imgui.new_frame()
         
-        # Create settings window
-        imgui.set_next_window_position(self.display[0] - 300, 10, condition=imgui.ONCE)
-        imgui.set_next_window_size(280, 400, condition=imgui.ONCE)
+        # Create settings window with fixed position
+        window_flags = (
+            imgui.WINDOW_NO_MOVE |          # Prevent window movement
+            imgui.WINDOW_NO_RESIZE          # Prevent window resizing
+        )
         
-        imgui.begin("Settings", flags=imgui.WINDOW_NO_COLLAPSE)
+        # Position at top right
+        imgui.set_next_window_position(
+            self.display[0] - 280,  # 280px width
+            0,                      # 0px from top
+            condition=imgui.ALWAYS  # Force position every frame
+        )
+        imgui.set_next_window_size(280, 400, condition=imgui.ONCE)  # ONCE allows collapse
+        imgui.set_next_window_collapsed(True, condition=imgui.ONCE)  # Start collapsed
+        
+        imgui.begin("Settings", flags=window_flags)
         
         # Particles Settings
         expanded, visible = imgui.collapsing_header("Particles")
