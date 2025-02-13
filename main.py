@@ -44,6 +44,8 @@ def handle_keyboard_input(event, config, game_state):
         game_state.dying = True
     elif event.key == pygame.K_t:
         game_state.snake.grow = True
+    elif event.key == pygame.K_c:
+        config['camera']['auto_rotate'] = not config['camera']['auto_rotate']
 
 def process_events(ui_system, config, game_state, mouse_state, camera):
     for event in pygame.event.get():
@@ -52,10 +54,14 @@ def process_events(ui_system, config, game_state, mouse_state, camera):
             pygame.quit()
             quit()
         
-        ui_system.handle_event(event)
-
         if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_p:
+                config['particles']['enabled'] = not config['particles']['enabled']
+                if not config['particles']['enabled']:
+                    game_state.particle_system.clear_particles()
             handle_keyboard_input(event, config, game_state)
+
+        ui_system.handle_event(event)
 
         settings_bounds = ui_system.get_settings_bounds()
         mouse_pos = pygame.mouse.get_pos()

@@ -38,8 +38,8 @@ class UISystem:
         
         # Create settings window with fixed position
         window_flags = (
-            imgui.WINDOW_NO_MOVE |          # Prevent window movement
-            imgui.WINDOW_NO_RESIZE          # Prevent window resizing
+            imgui.WINDOW_NO_MOVE |
+            imgui.WINDOW_ALWAYS_AUTO_RESIZE  # Let ImGui automatically adjust the window size
         )
         
         # Position at top right
@@ -50,6 +50,10 @@ class UISystem:
         )
         imgui.set_next_window_collapsed(True, condition=imgui.ONCE)  # Collapse window by default
         imgui.set_next_window_size(self.window_width, 400, condition=imgui.ONCE)  # ONCE allows collapse
+        imgui.set_next_window_size_constraints(
+            (self.window_width, 0),
+            (self.window_width, 10000)
+        )
         
         # Begin the window and store its visibility state
         expanded, visible = imgui.begin("Settings", flags=window_flags)
@@ -59,7 +63,7 @@ class UISystem:
         expanded, visible = imgui.collapsing_header("Particles")
         if expanded:
             changed, self.config['particles']['enabled'] = imgui.checkbox(
-                "Enabled", 
+                "Enabled [P]", 
                 self.config['particles']['enabled']
             )
             
@@ -77,7 +81,7 @@ class UISystem:
         expanded, visible = imgui.collapsing_header("Snake")
         if expanded:
             changed, self.config['snake']['colors']['grayscale'] = imgui.checkbox(
-                "Grayscale Mode", 
+                "Grayscale Mode [G]", 
                 self.config['snake']['colors']['grayscale']
             )
             
@@ -95,7 +99,7 @@ class UISystem:
         expanded, visible = imgui.collapsing_header("Camera")
         if expanded:
             changed, self.config['camera']['auto_rotate'] = imgui.checkbox(
-                "Auto Rotation", 
+                "Auto Rotation [C]", 
                 self.config['camera']['auto_rotate']
             )
             

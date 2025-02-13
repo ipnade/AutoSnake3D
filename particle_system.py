@@ -79,3 +79,6 @@ class ParticleSystem:
         glEnd()
         
         glDisable(GL_BLEND)
+
+    def clear_particles(self):
+        self.particles.clear()
