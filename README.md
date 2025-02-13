@@ -40,8 +40,8 @@ A self-playing 3D Snake game built with Pygame and OpenGL. The game runs autonom
 - Press 'P' to toggle particles on/off
 
 ## Planned Features
-- **Customization Options:**
-- **Performance Optimizations:**
+- **Customization Options**
+- **Performance Optimizations**
 
 ## Contributing
 Contributions are welcome! If you have suggestions or improvements, feel free to open an issue or submit a pull request.
