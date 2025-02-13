@@ -1,18 +1,35 @@
 import pygame
 from pygame.locals import *
-from OpenGL.GL import *
-from OpenGL.GLU import *
+from OpenGL.GL import (
+    glEnable, glDepthFunc, glTranslatef, GL_DEPTH_TEST, 
+    GL_LESS, glDisable
+)
+from OpenGL.GLU import gluPerspective
 from config import config
 from game.renderer import Renderer
 from game.game_state import GameState
 from game.camera import Camera
 from game.ui_system import UISystem
+import os
+import sys
+
+def get_resource_path(relative_path):
+    """Get absolute path to resource, works for dev and for PyInstaller"""
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
 
 def initialize_gl(config):
     """Initialize OpenGL and Pygame display settings"""
     pygame.init()
     pygame.display.set_caption("AutoSnake3D")
-    pygame.display.set_icon(pygame.image.load("textures/snake.png"))
+    
+    # Use resource path resolver
+    icon_path = get_resource_path("textures/snake.png")
+    pygame.display.set_icon(pygame.image.load(icon_path))
     
     width = config['display']['width']
     height = config['display']['height'] 
