@@ -23,8 +23,9 @@ class UISystem:
         style.colors[imgui.COLOR_TITLE_BACKGROUND_ACTIVE] = (0.2, 0.2, 0.2, 1.0)
     
     def get_display_speed(self):
-        """Convert internal speed (50-10) to display speed (1-10)"""
-        return int(((50 - self.config['snake']['speed']) / 4.4) + 1)
+        """Convert internal speed (100=slow, 1=fast) to a display slider value (1-100)."""
+        # When internal speed is 100, display value is 1; when speed is 1, display value is 100.
+        return 101 - self.config['snake']['speed']
         
     def handle_event(self, event):
         self.renderer.process_event(event)
@@ -76,14 +77,14 @@ class UISystem:
             )
             
             # Use converted display speed for the slider
-            changed, value = imgui.slider_int(
+            changed, display_value = imgui.slider_int(
                 "Snake Speed",
                 self.get_display_speed(),
-                1, 10  # 1 = slowest, 10 = fastest
+                1, 100  # 1 = slowest, 100 = fastest
             )
             if changed:
-                # Convert back to internal speed
-                self.config['snake']['speed'] = int(50 - (value - 1) * 4.4)
+                # Convert display value back into internal speed:
+                self.config['snake']['speed'] = 101 - display_value
             
         imgui.end()
         
