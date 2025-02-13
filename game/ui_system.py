@@ -87,6 +87,17 @@ class UISystem:
                 self.config['snake']['colors']['gamer_mode']
             )
             
+            # Add speed slider when gamer mode is enabled
+            if self.config['snake']['colors']['gamer_mode']:
+                changed, value = imgui.slider_float(
+                    "RGB Cycle Speed",
+                    self.config['snake']['colors']['gamer_speed'],
+                    0.1, 2.0,
+                    format="%.1fx"
+                )
+                if changed:
+                    self.config['snake']['colors']['gamer_speed'] = value
+            
             # Only show custom color options if gamer mode is off
             if not self.config['snake']['colors']['gamer_mode']:
                 changed, self.config['snake']['colors']['custom_color'] = imgui.checkbox(

@@ -90,9 +90,10 @@ class Renderer:
     def calculate_snake_color(self, segment_index, total_segments):
         """Calculate snake segment color based on configuration"""
         if self.config['snake']['colors']['gamer_mode']:
-            # Use time to cycle through hue values
+            # Use time to cycle through hue values with configurable speed
             import time
-            hue = (time.time() * 0.5) % 1.0
+            cycle_speed = self.config['snake']['colors']['gamer_speed']
+            hue = (time.time() * cycle_speed) % 1.0
             # Convert HSV to RGB (simplified version)
             h = hue * 6.0
             c = 1.0
