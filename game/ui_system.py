@@ -48,6 +48,7 @@ class UISystem:
             0,                      # 0px from top
             condition=imgui.ALWAYS  # Force position every frame
         )
+        imgui.set_next_window_collapsed(True, condition=imgui.ONCE)  # Collapse window by default
         imgui.set_next_window_size(self.window_width, 400, condition=imgui.ONCE)  # ONCE allows collapse
         
         # Begin the window and store its visibility state

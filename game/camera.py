@@ -20,6 +20,7 @@ class Camera:
         self.time = 0.0
         # Add a pitch oscillation speed parameter
         self.pitch_speed = 0.001  # Reduced from 0.01 for slower oscillation
+        self.disable_auto_spin = False  # New flag
 
     def update(self):
         # Apply momentum if available; otherwise, auto-spin.
@@ -30,7 +31,8 @@ class Camera:
             self.rotation_velocity_yaw *= self.friction
             self.rotation_velocity_pitch *= self.friction
         else:
-            self.auto_spin()
+            if not self.disable_auto_spin:
+                self.auto_spin()
 
     def get_position(self):
         # Calculate the camera position using yaw and pitch.

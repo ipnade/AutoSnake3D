@@ -46,20 +46,17 @@ def handle_keyboard_input(event, config, game_state):
         game_state.snake.grow = True
 
 def process_events(ui_system, config, game_state, mouse_state, camera):
-    """Process all game events, including mouse drag for manual rotation."""
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             ui_system.shutdown()
             pygame.quit()
             quit()
         
-        # Let UI system process the event first
         ui_system.handle_event(event)
 
         if event.type == pygame.KEYDOWN:
             handle_keyboard_input(event, config, game_state)
 
-        # Check if mouse is in settings window before handling camera rotation
         settings_bounds = ui_system.get_settings_bounds()
         mouse_pos = pygame.mouse.get_pos()
         mouse_in_ui = (
@@ -67,16 +64,17 @@ def process_events(ui_system, config, game_state, mouse_state, camera):
             settings_bounds['y'] <= mouse_pos[1] <= settings_bounds['y'] + settings_bounds['height']
         )
 
-        # Only handle camera rotation if mouse is not in UI
         if not mouse_in_ui:
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 1:  # Left click
+                if event.button == 1:
                     mouse_state['dragging'] = True
                     mouse_state['last_pos'] = event.pos
                     mouse_state['manual_speed'] = 0
+                    camera.disable_auto_spin = True  # Disable auto-spin
             elif event.type == pygame.MOUSEBUTTONUP:
                 if event.button == 1:
                     mouse_state['dragging'] = False
+                    camera.disable_auto_spin = False  # Re-enable auto-spin
             elif event.type == pygame.MOUSEMOTION and mouse_state['dragging']:
                 current_pos = event.pos
                 last_pos = mouse_state['last_pos']
