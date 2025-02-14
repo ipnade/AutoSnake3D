@@ -28,8 +28,8 @@ def initialize_gl(config):
     pygame.display.set_caption("AutoSnake3D")
     
     # Use resource path resolver
-    icon_path = get_resource_path("textures/snake.png")
-    pygame.display.set_icon(pygame.image.load(icon_path))
+    icon_path = get_resource_path("textures/snake.ico")
+    pygame.display.set_icon(pygame.image.load(get_resource_path("textures/snake.png")))
     
     width = config['display']['width']
     height = config['display']['height'] 
