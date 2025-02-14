@@ -12,6 +12,7 @@ class UISystem:
         imgui.create_context()
         self.io = imgui.get_io()
         self.io.display_size = display
+        self.io.ini_file_name = None
         self.renderer = PygameRenderer()
         
         # UI styling
