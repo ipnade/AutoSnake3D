@@ -8,7 +8,7 @@ from OpenGL.GLU import gluPerspective
 from config import config
 from game.renderer import Renderer
 from game.game_state import GameState
-from game.camera import Camera
+from game.camera import Camera, calculate_viewport
 from game.ui_system import UISystem
 import os
 import sys
@@ -41,7 +41,14 @@ def initialize_gl(config):
     # OpenGL settings
     glEnable(GL_DEPTH_TEST)
     glDepthFunc(GL_LESS)
-    gluPerspective(45, (width/height), 0.1, 500.0)
+    
+    # Calculate initial viewport
+    viewport = calculate_viewport(width, height)
+    glViewport(*viewport)
+    
+    # Use fixed aspect ratio for perspective
+    aspect_ratio = 16/9
+    gluPerspective(45, aspect_ratio, 0.1, 500.0)
     glTranslatef(0.0, 0.0, -100)
     
     if config['display'].get('vsync', True):
@@ -119,8 +126,15 @@ def process_events(ui_system, config, game_state, mouse_state, camera):
             config['display']['height'] = height
             new_display = (width, height)
             pygame.display.set_mode(new_display, DOUBLEBUF | OPENGL | pygame.RESIZABLE)
-            glViewport(0, 0, width, height)
-            gluPerspective(45, (width/height), 0.1, 500.0)
+            
+            # Calculate viewport to maintain aspect ratio
+            viewport = calculate_viewport(width, height)
+            glViewport(*viewport)
+            
+            # Use the target aspect ratio for perspective calculation
+            aspect_ratio = 16/9  # Maintain 16:9 ratio
+            gluPerspective(45, aspect_ratio, 0.1, 500.0)
+            
             # Update UI system display size
             ui_system.display = new_display
 

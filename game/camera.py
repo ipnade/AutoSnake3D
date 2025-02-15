@@ -73,3 +73,27 @@ class Camera:
     def setup_view(self, display):
         camX, camY, camZ = self.get_position()
         gluLookAt(camX, camY, camZ, 0, 0, 0, 0, 1, 0)
+
+def calculate_viewport(window_width, window_height, target_aspect_ratio=16/9):
+    """Calculate viewport dimensions to maintain aspect ratio
+    
+    Args:
+        window_width (int): Actual window width
+        window_height (int): Actual window height
+        target_aspect_ratio (float): Desired aspect ratio (default 16:9)
+        
+    Returns:
+        tuple: (x, y, width, height) for the viewport
+    """
+    current_aspect_ratio = window_width / window_height
+    
+    if current_aspect_ratio > target_aspect_ratio:
+        # Window is too wide
+        new_width = int(window_height * target_aspect_ratio)
+        viewport_x = (window_width - new_width) // 2
+        return (viewport_x, 0, new_width, window_height)
+    else:
+        # Window is too tall
+        new_height = int(window_width / target_aspect_ratio)
+        viewport_y = (window_height - new_height) // 2
+        return (0, viewport_y, window_width, new_height)
