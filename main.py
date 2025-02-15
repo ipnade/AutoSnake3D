@@ -12,6 +12,8 @@ from game.camera import Camera, calculate_viewport
 from game.ui_system import UISystem
 import os
 import sys
+import ctypes
+import ctypes.wintypes
 
 def get_resource_path(relative_path):
     """Get absolute path to resource, works for dev and for PyInstaller"""
@@ -22,8 +24,17 @@ def get_resource_path(relative_path):
         base_path = os.path.abspath(".")
     return os.path.join(base_path, relative_path)
 
+def get_work_area():
+    """Retrieve the Windows work area (screen without the taskbar) with its top-left position."""
+    SPI_GETWORKAREA = 48
+    rect = ctypes.wintypes.RECT()
+    ctypes.windll.user32.SystemParametersInfoW(SPI_GETWORKAREA, 0, ctypes.byref(rect), 0)
+    width = rect.right - rect.left
+    height = rect.bottom - rect.top
+    return rect.left, rect.top, width, height
+
 def initialize_gl(config):
-    """Initialize OpenGL and Pygame display settings"""
+    """Initialize OpenGL and Pygame display settings."""
     pygame.init()
     pygame.display.set_caption("AutoSnake3D")
     
@@ -31,19 +42,27 @@ def initialize_gl(config):
     icon_path = get_resource_path("textures/snake.ico")
     pygame.display.set_icon(pygame.image.load(get_resource_path("textures/snake.png")))
     
-    width = config['display']['width']
-    height = config['display']['height'] 
-    display = (width, height)
+    if config['display'].get('fullscreen_borderless', False):
+        # Get work area dimensions and top-left coordinates
+        left, top, width, height = get_work_area()
+        display_size = (width, height)
+        # Set window position according to the work area
+        os.environ['SDL_VIDEO_WINDOW_POS'] = f"{left},{top}"
+        flags = DOUBLEBUF | OPENGL | pygame.NOFRAME
+    else:
+        width = config['display']['width']
+        height = config['display']['height'] 
+        display_size = (width, height)
+        flags = DOUBLEBUF | OPENGL | pygame.RESIZABLE
     
-    # Add RESIZABLE flag
-    pygame.display.set_mode(display, DOUBLEBUF | OPENGL | pygame.RESIZABLE)
+    pygame.display.set_mode(display_size, flags)
     
     # OpenGL settings
     glEnable(GL_DEPTH_TEST)
     glDepthFunc(GL_LESS)
     
     # Calculate initial viewport
-    viewport = calculate_viewport(width, height)
+    viewport = calculate_viewport(*display_size)
     glViewport(*viewport)
     
     # Use fixed aspect ratio for perspective
@@ -54,7 +73,7 @@ def initialize_gl(config):
     if config['display'].get('vsync', True):
         pygame.display.gl_set_attribute(pygame.GL_SWAP_CONTROL, 1)
     
-    return display
+    return display_size
 
 def handle_keyboard_input(event, config, game_state):
     """Process keyboard controls"""

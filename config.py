@@ -5,6 +5,7 @@ config = {
         'height': 900,
         'fps': 144,
         'vsync': True,
+        'fullscreen_borderless': True
     },
     
     # Camera
