@@ -2,7 +2,7 @@ import pygame
 from pygame.locals import DOUBLEBUF, OPENGL
 from OpenGL.GL import (
     glEnable, glDepthFunc, glTranslatef, GL_DEPTH_TEST, 
-    GL_LESS, glDisable
+    GL_LESS, glDisable, glViewport
 )
 from OpenGL.GLU import gluPerspective
 from config import config
@@ -35,7 +35,8 @@ def initialize_gl(config):
     height = config['display']['height'] 
     display = (width, height)
     
-    pygame.display.set_mode(display, DOUBLEBUF | OPENGL)
+    # Add RESIZABLE flag
+    pygame.display.set_mode(display, DOUBLEBUF | OPENGL | pygame.RESIZABLE)
     
     # OpenGL settings
     glEnable(GL_DEPTH_TEST)
@@ -110,8 +111,20 @@ def process_events(ui_system, config, game_state, mouse_state, camera):
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             return False
-            
-        if event.type == pygame.KEYDOWN:
+
+        # Handle window resize
+        elif event.type == pygame.VIDEORESIZE:
+            width, height = event.size
+            config['display']['width'] = width
+            config['display']['height'] = height
+            new_display = (width, height)
+            pygame.display.set_mode(new_display, DOUBLEBUF | OPENGL | pygame.RESIZABLE)
+            glViewport(0, 0, width, height)
+            gluPerspective(45, (width/height), 0.1, 500.0)
+            # Update UI system display size
+            ui_system.display = new_display
+
+        elif event.type == pygame.KEYDOWN:
             handle_keyboard_input(event, config, game_state)
             
         ui_system.handle_event(event)
